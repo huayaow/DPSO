@@ -1,68 +1,40 @@
 /*
-** D-APSO
+** C_APSO.cpp : Conventional APSO
 */
-#include"PSO_DAPSO.h"
+#include"C_APSO.h"
 
-#include<iostream>
-using namespace std;
-
-// ----------------------------------------------------------------------------
-// 设置及初始化
-// ----------------------------------------------------------------------------
-void PSO_DAPSO::SetConfig( int par , int ite , double p1 , double p2 , double p3 )
+void C_APSO::SetConfig( int par , int ite )
 {
 	config.population = par ;
 	config.iteration = ite ;
-	//config.weight = w ;
-	//config.factor = f ;
-
-	pro1_threshold = p1 ;
-	pro2_threshold = p2 ;
-	pro3_threshold = p3 ;
 }
 
-
-// ----------------------------------------------------------------------------
-// 生成一条测试用例
-// ----------------------------------------------------------------------------
-int* PSO_DAPSO::Evolve()
+int* C_APSO::Evolve()
 {
-	/*
-	ofstream outfile("result.txt",ios::app);
-	outfile<<"-------------------------------------"<<endl;
-	outfile<<"Evolve"<<endl;
-	outfile<<"-------------------------------------"<<endl;
-	*/
 	double inertia = 0.9 ;
 	double factor1 = 1.3 ;
 	double factor2 = 1.3 ;
 	double factor_max = 1.8 ;
 	double factor_min = 0.8 ;
 
-	// 返回值
 	int *best = new int[sut->parameter] ;  
 	
-	vector<DParticle> T ; 	               // 粒子群
-
-	// 种群最优位置及适应值
+	vector<Particle> T ; 	               
 	int *gBest = new int[sut->parameter];  
 	int fitbest = 0 ;
 
-	// 初始化粒子群
 	for( int i = 0 ; i < config.population ; i++ )
 	{
-		DParticle a( sut->parameter , sut->value , sut->tway ) ;
+		Particle a( sut->parameter , sut->value ) ;
 		a.RandomInit();
 
 		T.push_back(a);
 	}
 
-	// gBest = T[0]
-	vector<DParticle>::iterator x = T.begin();     
+	vector<Particle>::iterator x = T.begin();     
 	for( int c = 0 ; c < sut->parameter ; c++)
 		gBest[c] = (*x).position[c] ;
 
-	// 迭代次数
 	int it = 1 ;
 
 	// adaptive
@@ -71,53 +43,36 @@ int* PSO_DAPSO::Evolve()
 	double sigma_max = 1.0 ;
 	double sigma_min = 0.1 ;
 
-	// 生成一个测试用例，gBest
 	while( true )
 	{
-		// 计算每个粒子的fitness值，并更新pbest，gbest
-		for( vector<DParticle>::iterator i = T.begin() ; i != T.end() ; i++ )
+		for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )
 		{
 			int fit = sut->FitnessValue( (*i).position , 0 ) ;
 
-			// 若fitness(t) = coverMax
-			//if( fit == sut->testcaseCoverMax )
-			if( fit == sut->testcaseCoverMax && PSO_Result.size() == 0 )
+			if( fit == sut->testcaseCoverMax )   	
 			{
 				for( int c = 0 ; c< sut->parameter ; c++)
 					best[c] = (*i).position[c] ;
 
 				delete[] gBest ;
-				for( vector<DParticle>::iterator j = T.begin() ; j != T.end() ; j++ )
-					j->clear();
+				for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )
+					i->clear();
 				T.clear();
 
 				return best ;
 			}
 
-			// 更新pBest
-			if ( fit > i->fitness_pbest )
-				i->Setpbest( fit );
+			if ( fit > (*i).fitness_pbest )
+				(*i).Setpbest( fit );
 			
-			// 更新gBest
 			if ( fit > fitbest )    
 			{
 				fitbest = fit ;
 				for( int c = 0 ; c < sut->parameter ; c++)
 					gBest[c] = (*i).position[c] ;
 			}
-			
-			else if( fit == fitbest )
-			{
-				if( HammingDist((*i).position) < HammingDist(gBest) )
-				{
-					for( int c = 0 ; c< sut->parameter ; c++)
-						gBest[c] = (*i).position[c] ;
-				}
-			}
+		} 
 
-		}  // end for
-
-		// 中止条件
 		if ( it >= config.iteration )
 			break ;
 
@@ -158,13 +113,12 @@ int* PSO_DAPSO::Evolve()
 		if( factor2 < factor_min )
 			factor2 = factor_min ;
 
-		// 更新粒子群
-		for( vector<DParticle>::iterator i = T.begin() ; i != T.end() ; i++ )  
+		for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )  
 		{
-			i->velocityUpdate( inertia, factor1, factor2, pro1_threshold , gBest );
-			i->positionUpdate( pro2_threshold , pro3_threshold );
+			(*i).velocityUpdate( config.weight , config.factor , gBest );
+			(*i).positionUpdate();
 		} 
-		
+
 		// ELS
 		int *gbest_tmp = new int[sut->parameter];
 		for( int k=0 ; k<sut->parameter ; k++ )
@@ -186,40 +140,33 @@ int* PSO_DAPSO::Evolve()
 				gBest[c] = gbest_tmp[c] ;
 		}
 
-		// iteration++
 		it++ ;
+	}  
 
-	}  // end while
-
-	for( int k = 0 ; k < sut->parameter ; k++ )   // best = gBest.position
+	for( int k = 0 ; k < sut->parameter ; k++ )  
 		best[k] = gBest[k] ;
 
-	//for( int k = 0 ; k < sut->parameter ; k++ )
-	//	cout<<gBest[k]<<" " ;
-	//cout<<endl;
-
 	delete[] gBest ;
-	for( vector<DParticle>::iterator j = T.begin() ; j != T.end() ; j++ )
-		j->clear();
+	for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )
+		i->clear();
 	T.clear();
 
 	return best ;
 }
 
 
-
 // f = ( d[g] - d[min] ) / ( d[max] - d[min] ), where d[i] = the mean distance of particle i
-double PSO_DAPSO::FCalculate( vector<DParticle> T, int* gbest )
+double C_APSO::FCalculate( vector<Particle> T, int* gbest )
 {
 	double min_dis = (double)MAX ;
 	double max_dis = 0 ;
 	double g_dis = 0 ;
 
 	// for each particle
-	for( vector<DParticle>::const_iterator i = T.begin(); i != T.end(); i++ )
+	for( vector<Particle>::const_iterator i = T.begin(); i != T.end(); i++ )
 	{
 		double alltmp = 0 ;
-		for( vector<DParticle>::const_iterator j = T.begin(); j != T.end() && j != i ; j++ )
+		for( vector<Particle>::const_iterator j = T.begin(); j != T.end() && j != i ; j++ )
 		{
 			double tmp = 0 ;
 			for( int k = 0 ; k < sut->parameter ; k++ )
@@ -236,7 +183,7 @@ double PSO_DAPSO::FCalculate( vector<DParticle> T, int* gbest )
 	}
 
 	// for gbest
-	for( vector<DParticle>::const_iterator i = T.begin(); i != T.end(); i++ )
+	for( vector<Particle>::const_iterator i = T.begin(); i != T.end(); i++ )
 	{
 		double tmp = 0 ;
 		for( int k = 0 ; k < sut->parameter ; k++ )
@@ -254,7 +201,7 @@ double PSO_DAPSO::FCalculate( vector<DParticle> T, int* gbest )
 // S2 = exploitation
 // S3 = convergence
 // S4 = jumping-out
-int PSO_DAPSO::FuzzyDicsion( double f , int previous)
+int C_APSO::FuzzyDicsion( double f , int previous)
 {
 	if( f <= 0.2 )
 		return 3 ;
@@ -329,49 +276,11 @@ int PSO_DAPSO::FuzzyDicsion( double f , int previous)
 		return 4 ;
 
 	return -1 ;
-
-	/*
-	// s1
-	if( f <= 0.4 || f > 0.8 )
-		s[0] = 0 ;
-	else if( 0.4 < f && f <= 0.6 )
-		s[0] = 5 * f - 2 ;
-	else if( 0.6 < f && f <= 0.7 )
-		s[0] = 1 ;
-	else
-		s[0] = -10 * f + 8 ;
-
-	// s2
-	if( f <= 0.2 || f > 0.6 )
-		s[1] = 0 ;
-	else if( 0.2 < f && f <= 0.3 )
-		s[1] = 10 * f - 2 ;
-	else if( 0.3 < f && f <= 0.4 )
-		s[1] = 1 ;
-	else
-		s[1] = -5 * f + 3 ;
-
-	// s3
-	if( f <= 0.1 )
-		s[2] = 1 ;
-	else if( 0.1 < f && f <= 0.3 )
-		s[2] = -5 * f + 1.5 ;
-	else
-		s[2] = 0 ;
-
-	// s4
-	if( f <= 0.7 )
-		s[3] = 0 ;
-	else if( 0.7 < f && f <= 0.9 )
-		s[3] = 5 * f - 3.5 ;
-	else
-		s[3] = 1 ;
-	*/
 }
 
 // Gaussian Distribution
 // Expectation - E , Variance - V
-double PSO_DAPSO::Gaussrand( double E , double V )
+double C_APSO::Gaussrand( double E , double V )
 {
     static double V1, V2, S;
     static int phase = 0;

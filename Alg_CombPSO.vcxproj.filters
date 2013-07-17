@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SUT.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Particle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DParticle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PSO_DPSO.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Experiment.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PSO.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PSO_CPSO.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ExperimentComp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CASet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="C_APSO.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="D_APSO.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="D_DMS.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="D_TVAC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="C_TVAC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="C_CLPSO.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="D_CLPSO.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="C_DMSPSO.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SUT.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Particle.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DParticle.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PSO_DPSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Experiment.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PSO_CPSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ExperimentComp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="C_APSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="D_APSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="D_DMSPSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="D_TVAC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="C_CLPSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="D_CLPSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="C_DMSPSO.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="C_TVAC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

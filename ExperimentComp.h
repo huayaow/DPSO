@@ -1,19 +1,20 @@
 /*
-** Experiment Compare Study
+** Experiment Comparison Study
 */
 #pragma once
 #include"PSO_CPSO.h"
 #include"PSO_DPSO.h"
-
-#include"PSO_DHPSO.h"
-#include"PSO_DCLPSO.h"
-#include"PSO_DAPSO.h"
-#include"PSO_DDMS.h"
-
-#include"PSO_CHPSO.h"
-#include"PSO_CCLPSO.h"
-#include"PSO_CAPSO.h"
-#include"PSO_CDMS.h"
+#include"D_TVAC.h"
+#include"D_CLPSO.h"
+#include"D_APSO.h"
+#include"D_DMSPSO.h"
+#include"C_TVAC.h"
+#include"C_CLPSO.h"
+#include"C_APSO.h"
+#include"C_DMSPSO.h"
+#include<fstream>
+#include<iostream>
+#include<ctime>
 #include<string>
 
 struct CoveringArray
@@ -69,22 +70,15 @@ public:
 	void InitialCA_6();
 	void InitialCA_7();
 
-	void InitialCA_tp();
-	void InitialCA_tp1();
-
 	// CPSO and DPSO
-	void CompareStudy_1() ;
+	void CompareStudy() ;
 
 	// Discrete CLPSO, TVAC, DMS-PSO, APSO
-	void CompareStudy_v() ;
-	void CompareStudy_v_add();
+	void CompareStudy_d() ;
 
 	// Conventional CLPSO, TVAC, DMS-PSO, APSO
-	void CompareStudy_v_c() ;
-	void CompareStudy_v_c_1() ;
+	void CompareStudy_c() ;
 
-	// Conventional
-	void CompareStudy_cv( string alg );
 
 };
 	

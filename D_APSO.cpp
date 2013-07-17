@@ -1,22 +1,26 @@
 /*
-** Conventional APSO
+** Discrete APSO
 */
-#include"PSO_CAPSO.h"
-#include<iostream>
+#include"D_APSO.h"
 
 // ----------------------------------------------------------------------------
 // 设置及初始化
 // ----------------------------------------------------------------------------
-void PSO_CAPSO::SetConfig( int par , int ite )
+void D_APSO::SetConfig( int par , int ite , double p1 , double p2 , double p3 )
 {
 	config.population = par ;
 	config.iteration = ite ;
+
+	pro1_threshold = p1 ;
+	pro2_threshold = p2 ;
+	pro3_threshold = p3 ;
 }
+
 
 // ----------------------------------------------------------------------------
 // 生成一条测试用例
 // ----------------------------------------------------------------------------
-int* PSO_CAPSO::Evolve()
+int* D_APSO::Evolve()
 {
 	double inertia = 0.9 ;
 	double factor1 = 1.3 ;
@@ -24,28 +28,24 @@ int* PSO_CAPSO::Evolve()
 	double factor_max = 1.8 ;
 	double factor_min = 0.8 ;
 
-	// 返回值
 	int *best = new int[sut->parameter] ;  
 	
-	vector<Particle> T ; 	               // 粒子群
-	int *gBest = new int[sut->parameter];  // 种群最优
+	vector<DParticle> T ;
+	int *gBest = new int[sut->parameter];  
 	int fitbest = 0 ;
 
-	// 初始化粒子群
 	for( int i = 0 ; i < config.population ; i++ )
 	{
-		Particle a( sut->parameter , sut->value ) ;
+		DParticle a( sut->parameter , sut->value , sut->tway ) ;
 		a.RandomInit();
 
 		T.push_back(a);
 	}
 
-	// gBest = T[0]
-	vector<Particle>::iterator x = T.begin();     
+	vector<DParticle>::iterator x = T.begin();     
 	for( int c = 0 ; c < sut->parameter ; c++)
 		gBest[c] = (*x).position[c] ;
 
-	// 迭代次数
 	int it = 1 ;
 
 	// adaptive
@@ -54,43 +54,45 @@ int* PSO_CAPSO::Evolve()
 	double sigma_max = 1.0 ;
 	double sigma_min = 0.1 ;
 
-
-	// 生成一个测试用例，gBest
 	while( true )
-	{
-		// 计算每个粒子的fitness值，并更新pbest，gbest
-		for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )
+	{		
+		for( vector<DParticle>::iterator i = T.begin() ; i != T.end() ; i++ )
 		{
 			int fit = sut->FitnessValue( (*i).position , 0 ) ;
 
-			// 若fitness(t) = coverMax ， 返回
-			if( fit == sut->testcaseCoverMax )   	
+			if( fit == sut->testcaseCoverMax && PSO_Result.size() == 0 )
 			{
 				for( int c = 0 ; c< sut->parameter ; c++)
 					best[c] = (*i).position[c] ;
 
 				delete[] gBest ;
-				for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )
-					i->clear();
+				for( vector<DParticle>::iterator j = T.begin() ; j != T.end() ; j++ )
+					j->clear();
 				T.clear();
 
 				return best ;
 			}
 
-			// 更新pBest
-			if ( fit > (*i).fitness_pbest )
-				(*i).Setpbest( fit );
+			if ( fit > i->fitness_pbest )
+				i->Setpbest( fit );
 			
-			// 更新gBest
 			if ( fit > fitbest )    
 			{
 				fitbest = fit ;
 				for( int c = 0 ; c < sut->parameter ; c++)
 					gBest[c] = (*i).position[c] ;
 			}
-		}  // end for
+			else if( fit == fitbest )
+			{
+				if( HammingDist((*i).position) < HammingDist(gBest) )
+				{
+					for( int c = 0 ; c< sut->parameter ; c++)
+						gBest[c] = (*i).position[c] ;
+				}
+			}
 
-		// 中止条件
+		}
+
 		if ( it >= config.iteration )
 			break ;
 
@@ -131,13 +133,12 @@ int* PSO_CAPSO::Evolve()
 		if( factor2 < factor_min )
 			factor2 = factor_min ;
 
-		// 更新粒子群
-		for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )  
+		for( vector<DParticle>::iterator i = T.begin() ; i != T.end() ; i++ )  
 		{
-			(*i).velocityUpdate( config.weight , config.factor , gBest );
-			(*i).positionUpdate();
+			i->velocityUpdate( inertia, factor1, factor2, pro1_threshold , gBest );
+			i->positionUpdate( pro2_threshold , pro3_threshold );
 		} 
-
+		
 		// ELS
 		int *gbest_tmp = new int[sut->parameter];
 		for( int k=0 ; k<sut->parameter ; k++ )
@@ -159,36 +160,35 @@ int* PSO_CAPSO::Evolve()
 				gBest[c] = gbest_tmp[c] ;
 		}
 
-		// iteration++
 		it++ ;
 
-		
 	}  // end while
 
-	for( int k = 0 ; k < sut->parameter ; k++ )   // best = gBest.position
+	for( int k = 0 ; k < sut->parameter ; k++ ) 
 		best[k] = gBest[k] ;
 
 	delete[] gBest ;
-	for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )
-		i->clear();
+	for( vector<DParticle>::iterator j = T.begin() ; j != T.end() ; j++ )
+		j->clear();
 	T.clear();
 
 	return best ;
 }
 
 
+
 // f = ( d[g] - d[min] ) / ( d[max] - d[min] ), where d[i] = the mean distance of particle i
-double PSO_CAPSO::FCalculate( vector<Particle> T, int* gbest )
+double D_APSO::FCalculate( vector<DParticle> T, int* gbest )
 {
 	double min_dis = (double)MAX ;
 	double max_dis = 0 ;
 	double g_dis = 0 ;
 
 	// for each particle
-	for( vector<Particle>::const_iterator i = T.begin(); i != T.end(); i++ )
+	for( vector<DParticle>::const_iterator i = T.begin(); i != T.end(); i++ )
 	{
 		double alltmp = 0 ;
-		for( vector<Particle>::const_iterator j = T.begin(); j != T.end() && j != i ; j++ )
+		for( vector<DParticle>::const_iterator j = T.begin(); j != T.end() && j != i ; j++ )
 		{
 			double tmp = 0 ;
 			for( int k = 0 ; k < sut->parameter ; k++ )
@@ -205,7 +205,7 @@ double PSO_CAPSO::FCalculate( vector<Particle> T, int* gbest )
 	}
 
 	// for gbest
-	for( vector<Particle>::const_iterator i = T.begin(); i != T.end(); i++ )
+	for( vector<DParticle>::const_iterator i = T.begin(); i != T.end(); i++ )
 	{
 		double tmp = 0 ;
 		for( int k = 0 ; k < sut->parameter ; k++ )
@@ -223,7 +223,7 @@ double PSO_CAPSO::FCalculate( vector<Particle> T, int* gbest )
 // S2 = exploitation
 // S3 = convergence
 // S4 = jumping-out
-int PSO_CAPSO::FuzzyDicsion( double f , int previous)
+int D_APSO::FuzzyDicsion( double f , int previous)
 {
 	if( f <= 0.2 )
 		return 3 ;
@@ -302,7 +302,7 @@ int PSO_CAPSO::FuzzyDicsion( double f , int previous)
 
 // Gaussian Distribution
 // Expectation - E , Variance - V
-double PSO_CAPSO::Gaussrand( double E , double V )
+double D_APSO::Gaussrand( double E , double V )
 {
     static double V1, V2, S;
     static int phase = 0;

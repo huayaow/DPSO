@@ -1,6 +1,5 @@
 #include"ExperimentComp.h"
 
-
 void ExperimentComp::InitialCA_1()
 {
 	ClearCA();

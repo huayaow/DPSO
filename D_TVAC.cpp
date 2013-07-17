@@ -1,20 +1,15 @@
 /*
-** D-CLPSO
+** Discrete TVAC
 */
-#include"PSO_DCLPSO.h"
-
-#include<iostream>
-using namespace std;
+#include"D_TVAC.h"
 
 // ----------------------------------------------------------------------------
 // 设置及初始化
 // ----------------------------------------------------------------------------
-void PSO_DCLPSO::SetConfig( int par , int ite , double w , double f , double p1 , double p2 , double p3 )
+void D_TVAC::SetConfig( int par , int ite , double p1 , double p2 , double p3 )
 {
 	config.population = par ;
 	config.iteration = ite ;
-	config.weight = w ;
-	config.factor = f ;
 
 	pro1_threshold = p1 ;
 	pro2_threshold = p2 ;
@@ -25,14 +20,15 @@ void PSO_DCLPSO::SetConfig( int par , int ite , double w , double f , double p1 
 // ----------------------------------------------------------------------------
 // 生成一条测试用例
 // ----------------------------------------------------------------------------
-int* PSO_DCLPSO::Evolve()
+int* D_TVAC::Evolve()
 {
-	/*
-	ofstream outfile("result.txt",ios::app);
-	outfile<<"-------------------------------------"<<endl;
-	outfile<<"Evolve"<<endl;
-	outfile<<"-------------------------------------"<<endl;
-	*/
+	double inertia = 0.9 ;
+	double inertia_max = 0.9 ;
+	double inertia_min = 0.4 ;
+	double factor1 = 1.3 ;
+	double factor2 = 1.3 ;
+	double factor_max = 1.8 ;
+	double factor_min = 0.8 ;
 
 	// 返回值
 	int *best = new int[sut->parameter] ;  
@@ -59,11 +55,6 @@ int* PSO_DCLPSO::Evolve()
 
 	// 迭代次数
 	int it = 1 ;
-
-	// PC[i]
-	double *Pc = new double[config.population] ;
-	for( int k = 0 ; k < config.population ; k++ )
-		Pc[k] = 0.05 + 0.45 * ((exp((double)(10*k)/(double)(config.population-1)) - 1) / (exp((double)10) - 1));
 
 	// 生成一个测试用例，gBest
 	while( true )
@@ -108,7 +99,7 @@ int* PSO_DCLPSO::Evolve()
 						gBest[c] = (*i).position[c] ;
 				}
 			}
-			
+
 		}  // end for
 
 		// 中止条件
@@ -116,50 +107,24 @@ int* PSO_DCLPSO::Evolve()
 			break ;
 
 		// 更新粒子群
-		int index = 0 ;
-		for( vector<DParticle>::iterator i = T.begin() ; i != T.end() ; i++ , index++ )  
+		for( vector<DParticle>::iterator i = T.begin() ; i != T.end() ; i++ )  
 		{
-			// CL
-			// random > Pc[i] , learn from own pbest
-			if( (double)(rand()%1000)/1000.0 > Pc[index] )
-			{
-				i->velocityUpdate_Comprehensive( config.weight , config.factor , pro1_threshold , i->pbest );
-				i->positionUpdate( pro2_threshold , pro3_threshold );
-			}
-			// random < Pc[i] , learn from other pbest
-			else
-			{
-				int f1, f2 ;
-				do {
-					f1 = (int)(((double)(rand()%1000)/1000.0)*config.population) ;
-				} while( f1 == index );
-				do {
-					f2 = (int)(((double)(rand()%1000)/1000.0)*config.population) ;
-				} while( f2 == index );
-
-				vector<DParticle>::const_iterator x1 = T.begin() + f1 ;
-				vector<DParticle>::const_iterator x2 = T.begin() + f2 ;
-
-				if( sut->FitnessValue(x1->position,0) > sut->FitnessValue(x2->position,0) )
-					i->velocityUpdate_Comprehensive( config.weight , config.factor , pro1_threshold , x1->pbest );
-				else
-					i->velocityUpdate_Comprehensive( config.weight , config.factor , pro1_threshold , x2->pbest );
-				
-				i->positionUpdate( pro2_threshold , pro3_threshold );
-			}
+			i->velocityUpdate( inertia, factor1, factor2, pro1_threshold , gBest );
+			i->positionUpdate( pro2_threshold , pro3_threshold );
 		} 
-		
+
 		// iteration++
 		it++ ;
+
+		// TVAC
+		inertia = inertia_max - ( inertia_max - inertia_min ) * ( (double)it / (double)config.iteration );
+		factor1 = ( factor_min - factor_max ) * ( (double)it / (double)config.iteration ) + factor_max ;
+		factor2 = ( factor_max - factor_min ) * ( (double)it / (double)config.iteration ) + factor_min ;
 
 	}  // end while
 
 	for( int k = 0 ; k < sut->parameter ; k++ )   // best = gBest.position
 		best[k] = gBest[k] ;
-
-	//for( int k = 0 ; k < sut->parameter ; k++ )
-	//	cout<<gBest[k]<<" " ;
-	//cout<<endl;
 
 	delete[] gBest ;
 	for( vector<DParticle>::iterator j = T.begin() ; j != T.end() ; j++ )

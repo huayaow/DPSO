@@ -1,9 +1,5 @@
 #include"Experiment.h"
 
-#include<fstream>
-#include<ctime>
-using namespace std;
-
 /* --------------------------------------------------------------
   iteration
 -------------------------------------------------------------- */

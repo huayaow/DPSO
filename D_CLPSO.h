@@ -1,14 +1,14 @@
 /*
-** Discrete PSO
+** Discrete CLPSO
 */
 #pragma once
 #include"PSO.h"
 #include"DParticle.h"
 
-class PSO_DPSO : public PSO
+class D_CLPSO : public PSO
 {
 public:
-	PSO_DPSO( SUT* s )
+	D_CLPSO( SUT* s )
 	{
 		sut = s ;
 	};
@@ -21,4 +21,5 @@ public:
 public:
 	int* Evolve();
 	void SetConfig( int par , int ite , double w , double f , double p1 , double p2 , double p3 );
+
 };

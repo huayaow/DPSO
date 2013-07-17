@@ -1,14 +1,14 @@
 /*
-** D-TVAC
+** Discrete APSO
 */
 #pragma once
 #include"PSO.h"
 #include"DParticle.h"
 
-class PSO_DHPSO : public PSO
+class D_APSO : public PSO
 {
 public:
-	PSO_DHPSO( SUT* s )
+	D_APSO( SUT* s )
 	{
 		sut = s ;
 	};
@@ -22,4 +22,8 @@ public:
 	int* Evolve();
 	void SetConfig( int par , int ite , double p1 , double p2 , double p3 );
 
+private:
+	double FCalculate( vector<DParticle> T, int* gbest );
+	int FuzzyDicsion( double f , int previous );
+	double Gaussrand( double E , double V );
 };

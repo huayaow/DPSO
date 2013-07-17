@@ -1,8 +1,5 @@
 #include"Particle.h"
 
-#include<iostream>
-using namespace std;
-
 void Particle::clear()
 {
 	delete[] position ;
@@ -11,8 +8,7 @@ void Particle::clear()
 }
 
 // ----------------------------------------------------------------------------
-// 随机初始化，fitness初始为0
-// dim = 维度，range = 每个维度取值
+// initialize
 // ----------------------------------------------------------------------------
 void Particle::RandomInit()
 {
@@ -29,7 +25,7 @@ void Particle::RandomInit()
 }
 
 // ----------------------------------------------------------------------------
-// 更新历史最优
+// update pbest
 // ----------------------------------------------------------------------------
 void Particle::Setpbest( int fit )
 {
@@ -39,8 +35,8 @@ void Particle::Setpbest( int fit )
 }
 
 // ----------------------------------------------------------------------------
-// velocity
-// 参数：weight , factor
+// velocity update
+// parameter requires：weight , factor , gbest
 // ----------------------------------------------------------------------------
 void Particle::velocityUpdate( double weight , double factor , const int* gbest )
 {
@@ -53,7 +49,7 @@ void Particle::velocityUpdate( double weight , double factor , const int* gbest 
 			(double) factor * r1 * ( pbest[v] - position[v] ) +
 			(double) factor * r2 * ( gbest[v] - position[v] ) ;
 
-		// 最大速度处理
+		// maximum velocity limitation
 		if( velocity[v] > range[v]/2 )
 			velocity[v] = (double)range[v]/2  ;
 		if( velocity[v] < -range[v]/2 )
@@ -63,16 +59,15 @@ void Particle::velocityUpdate( double weight , double factor , const int* gbest 
 }
 
 // ----------------------------------------------------------------------------
-// velocity dim
+// velocity update used for CLPSO
 // ----------------------------------------------------------------------------
 void Particle::velocityUpdateDim( double weight, double factor , const int* pbest, int dim )
 {
 	double r1 = (double)(rand()%1000)/1000.0 ;
-	
 	velocity[dim] = (double) weight * velocity[dim]  +
 			(double) factor * r1 * ( pbest[dim] - position[dim] );
 
-	// 最大速度处理
+	// maximum velocity limitation
 	if( velocity[dim] > range[dim]/2 )
 		velocity[dim] = (double)range[dim]/2  ;
 	if( velocity[dim] < -range[dim]/2 )
@@ -80,12 +75,8 @@ void Particle::velocityUpdateDim( double weight, double factor , const int* pbes
 			
 }
 
-
 // ----------------------------------------------------------------------------
-// position
-// 参数：version 0 - Absorbing Walls
-//               1 - Reflecting Walls
-//               2 - Cyclic Walls
+// position update
 // ----------------------------------------------------------------------------
 void Particle::positionUpdate()
 {
@@ -93,30 +84,10 @@ void Particle::positionUpdate()
 	{
 		position[v] = position[v] + (int)velocity[v] ;
 
-		// 边界处理
-		/*
-		if( version == 0 )   // Absorbing Walls
-		{
-			if( position[v] >= range[v] )
-				position[v] = range[v]-1 ;
-			if ( position[v] < 0 )
-				position[v] = 0 ;
-		}
-		*/
-		//if( version == 1 )   // Reflecting Walls
-		//{
-			if( position[v] >= range[v] )
-				position[v] = 2*range[v]-position[v]-1 ;
-			if ( position[v] < 0 )
-				position[v] = -position[v]-1 ;
-		//}
-		/*
-		if( version == 2 )  // Cyclic Walls
-		{
-			if( position[v] >= range[v] )
-				position[v] = position[v]-range[v] ;
-			if ( position[v] < 0 )
-				position[v] = position[v]+range[v] ;
-		}*/
+		// Reflecting Walls
+		if( position[v] >= range[v] )
+			position[v] = 2*range[v]-position[v]-1 ;
+		if ( position[v] < 0 )
+			position[v] = -position[v]-1 ;
 	}
 }

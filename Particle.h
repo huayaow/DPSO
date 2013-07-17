@@ -1,15 +1,13 @@
 /*
-** Conventional Particle
+** Conventional Discrete Particle Representation
+** use a D-dimention vector to represent particle's position and velocity
 */
 #pragma once
-
 #include<cstdlib>
 #include<cmath>
-using namespace std;
 
 class Particle
 {
-	// 构造函数
 public:
 	Particle( int dim , int* ran )
 	{
@@ -25,34 +23,34 @@ public:
 	}
 
 public:
-	// 参数个数及取值的指针
-	int dimension ;
-	int* range ;
+	int dimension ;    // the number of dimensions
+	int* range ;       // the number of values of each dimension
 
-	// 当前位置，速度及适应值
+	// current position，velocity and fitness value
 	int* position ;
 	double* velocity ;
 	int fitness_now ;
 
-	// 历史上最优位置及适应值
+	// the best personal postion (pbest) and its fitness value
 	int* pbest ;
 	int fitness_pbest ;
 
-public:
-	void RandomInit() ;  // 随机初始化
+	// clear
+	void clear();
 
-	// 用当前位置更新历史最优
+public:
+	// randomly initialize
+	void RandomInit() ;
+
+	// update pbest
 	void Setpbest( int fit );
 
-	// 更新
+	// update position and velocity
 	void velocityUpdate( double weight , double factor , const int* gbest ) ;
 	void positionUpdate() ;
 
-	// CLPSO更新
+	// used for CLPSO
 	void velocityUpdateDim( double weight, double factor , const int* pbest, int dim );
-
-	void clear();
-
 };
 
 

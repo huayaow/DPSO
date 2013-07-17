@@ -1,8 +1,5 @@
 #include"DParticle.h"
 
-#include<iostream>
-using namespace std;
-
 void DParticle::clear()
 {
 	delete[] position ;
@@ -16,8 +13,7 @@ void DParticle::clear()
 // ----------------------------------------------------------------------------
 // n - parameter , m - tway , t - num 
 // ----------------------------------------------------------------------------
-
-// º∆À„C(n,m)
+// compute C(n,m)
 int DParticle::cal_combine( int n , int m )   
 {
 	int ret = 1 ;
@@ -303,64 +299,6 @@ void DParticle::positionUpdate( double prob2, double prob3 )
 		if( parcount == 0 )
 			break ;
 	}
-
-	/*
-	bool *token = new bool[velocity.size()];
-	for( unsigned int k=0 ; k<velocity.size() ; k++ )
-		token[k] = true ;
-
-	int parcount = dimension ;
-	unsigned int count = 0 ;
-	while( count < velocity.size() && parcount != 0 )
-	{
-		// search the largest velocity for now
-		double tp = 0.0 ;
-		int index = 0 ;
-
-		map<PosVal,double>::iterator nw = velocity.begin() ;
-		int c = 0 ;
-
-		for( map<PosVal,double>::iterator x = velocity.begin() ; x != velocity.end() ; x++ , c++ )
-		{
-			if( token[c] && x->second > tp )
-			{
-				tp = x->second ;
-				nw = x ;
-				index = c ;
-			}
-		}
-		token[index] = false ;
-
-		// update
-		if( (double)(rand()%1000)/1000.0 < nw->second )
-		{
-			//cout<<"update "<<nw->first.posI<<" , "<<nw->first.valI<<endl;
-
-			int *pos = cal_num2pos( nw->first.posI );
-		    int *val = cal_num2val( nw->first.valI , pos );
-
-			for( int k=0 ; k<strength ; k++ )
-			{
-				if( np[pos[k]] == -1 && (double)(rand()%1000)/1000.0 < prob )
-				{
-					np[pos[k]] = val[k] ;
-					parcount-- ;
-				}
-			}
-
-			//cout<<"np: ";
-			//for( int k=0 ; k<dimension ; k++ )
-			//	cout<<np[k]<<" ";
-			//cout<<endl;
-
-			delete[] pos ;
-			delete[] val ;
-		}
-
-		count++ ;
-
-	} // end while
-	*/
 
 	// new position
 	for( int k=0 ; k<dimension ; k++ )

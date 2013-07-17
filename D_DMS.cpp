@@ -1,7 +1,7 @@
 /*
-** D-DMS-PSO
+** Discrete DMS-PSO
 */
-#include"PSO_DDMS.h"
+#include"D_DMSPSO.h"
 
 #include<iostream>
 #include"Windows.h"
@@ -10,7 +10,7 @@ using namespace std;
 // ----------------------------------------------------------------------------
 // 设置及初始化
 // ----------------------------------------------------------------------------
-void PSO_DDMS::SetConfig( int par , int ite , double w , double f , double p1 , double p2 , double p3 )
+void D_DMSPSO::SetConfig( int par , int ite , double w , double f , double p1 , double p2 , double p3 )
 {
 	config.population = par ;
 	config.iteration = ite ;
@@ -26,7 +26,7 @@ void PSO_DDMS::SetConfig( int par , int ite , double w , double f , double p1 , 
 // ----------------------------------------------------------------------------
 // 生成一条测试用例
 // ----------------------------------------------------------------------------
-int* PSO_DDMS::Evolve()
+int* D_DMSPSO::Evolve()
 {
 	double inertia = 0.9 ;
 	double inertia_max = 0.9 ;

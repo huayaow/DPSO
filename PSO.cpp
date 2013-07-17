@@ -3,14 +3,8 @@
 */
 #include"PSO.h"
 
-#include<ctime>
-#include<cstdlib>
-#include<cmath>
-#include<iostream>
-using namespace std;
-
 // ----------------------------------------------------------------------------
-// 清理
+// clear
 // ----------------------------------------------------------------------------
 void PSO::clear_PSOResult()
 {
@@ -19,16 +13,17 @@ void PSO::clear_PSOResult()
 	PSO_Result.clear();
 }
 
+// ----------------------------------------------------------------------------
+// copy A to B with the number of parameter parsize
+// ----------------------------------------------------------------------------
 void PSO::copy( vector<int*> A , vector<int*> &B , int prasize )
 {
-	// 判断B是否已分配，若已分配，删除B
 	if( B.size() != 0 )
 	{
 		for( vector<int*>::iterator i = B.begin() ; i != B.end() ; i++ )
 			delete[] (*i) ;
 		B.clear();
 	}
-	// 分配新空间，并加入
 	for( vector<int*>::iterator i = A.begin() ; i != A.end() ; i++ )
 	{
 		int *test = new int[prasize] ;
@@ -37,7 +32,6 @@ void PSO::copy( vector<int*> A , vector<int*> &B , int prasize )
 		B.push_back(test);
 	}
 }
-
 
 // ----------------------------------------------------------------------------
 // Hamming Distance
@@ -62,48 +56,34 @@ double PSO::HammingDist( const int *test )
 	return h ;
 }
 
-
 // ----------------------------------------------------------------------------
-// One-test-at-a-time
+// covering array generation
 // ----------------------------------------------------------------------------
 void PSO::PSOEvolve()
 {
 	PSO_SIZE = MAX ;
 	PSO_TIME = MAX ;
-	//PSO_COV = 0 ;
 
-	// 清空
 	clear_PSOResult(); 
-	//FEtimes = 0 ;
 
-	//
-	// 开始执行
-	//
-
-	// 初始化
+	// initialize
 	sut->GenerateS();
 	time_t nowtime1 = time( 0 );
 
-	// 逐一生成测试用例
+	// One-test-at-a-time
 	while( sut->SCount != 0 )
 	{
 		int *best = Evolve();
 		PSO_Result.push_back( best );
 		int cov = sut->FitnessValue( best , 1 );
-
-		cout<<PSO_Result.size()<<", "<<sut->SCountAll-sut->SCount<<endl;
-
-		//if( FEtimes > 10000 )
-		//	break;
 	}
 
 	time_t nowtime2 = time(0);
 	
 	PSO_SIZE = PSO_Result.size();
 	PSO_TIME = nowtime2 - nowtime1 ;
-	//PSO_COV = sut->SCountAll - sut->SCount ;
 
-	// 如果有种子，最后加入TResult
+	// if there has seed ...
 	if( sut->seedInfo.size() != 0 )
 	{
 		vector<int*> temp ;

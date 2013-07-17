@@ -1,5 +1,5 @@
 /*
-** Discrete Particle
+** Discrete Particle Representation
 */
 #pragma once
 

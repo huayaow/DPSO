@@ -1,12 +1,12 @@
 /*
-** Conventional CLPSO
+** C_CLPSO.cpp : Conventional CLPSO
 */
-#include"PSO_CCLPSO.h"
+#include"C_CLPSO.h"
 
 // ----------------------------------------------------------------------------
-// 设置及初始化
+// initialization
 // ----------------------------------------------------------------------------
-void PSO_CCLPSO::SetConfig( int par , int ite , double w , double f )
+void C_CLPSO::SetConfig( int par , int ite , double w , double f )
 {
 	config.population = par ;
 	config.iteration = ite ;
@@ -15,18 +15,18 @@ void PSO_CCLPSO::SetConfig( int par , int ite , double w , double f )
 }
 
 // ----------------------------------------------------------------------------
-// 生成一条测试用例
+// generate a test case
 // ----------------------------------------------------------------------------
-int* PSO_CCLPSO::Evolve()
+int* C_CLPSO::Evolve()
 {
-	// 返回值
+	// return test case
 	int *best = new int[sut->parameter] ;  
 	
-	vector<Particle> T ; 	               // 粒子群
-	int *gBest = new int[sut->parameter];  // 种群最优
+	vector<Particle> T ; 	               // swarm
+	int *gBest = new int[sut->parameter];  // the best position of the swarm
 	int fitbest = 0 ;
 
-	// 初始化粒子群
+	// initialize
 	for( int i = 0 ; i < config.population ; i++ )
 	{
 		Particle a( sut->parameter , sut->value ) ;
@@ -40,7 +40,7 @@ int* PSO_CCLPSO::Evolve()
 	for( int c = 0 ; c < sut->parameter ; c++)
 		gBest[c] = (*x).position[c] ;
 
-	// 迭代次数
+	// iteration count
 	int it = 1 ;
 
 	// PC[i]
@@ -48,15 +48,15 @@ int* PSO_CCLPSO::Evolve()
 	for( int k = 0 ; k < config.population ; k++ )
 		Pc[k] = 0.05 + 0.45 * ((exp((double)(10*k)/(double)(config.population-1)) - 1) / (exp((double)10) - 1));
 
-	// 生成一个测试用例，gBest
+	// iterations
 	while( true )
 	{
-		// 计算每个粒子的fitness值，并更新pbest，gbest
+		// compute fitness value for each particle，then update pbest，gbest
 		for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ )
 		{
 			int fit = sut->FitnessValue( (*i).position , 0 ) ;
 
-			// 若fitness(t) = coverMax ， 返回
+			// if fitness(t) = coverMax, return
 			if( fit == sut->testcaseCoverMax )   	
 			{
 				for( int c = 0 ; c< sut->parameter ; c++)
@@ -70,11 +70,11 @@ int* PSO_CCLPSO::Evolve()
 				return best ;
 			}
 
-			// 更新pBest
+			// update pBest
 			if ( fit > (*i).fitness_pbest )
 				(*i).Setpbest( fit );
 			
-			// 更新gBest
+			// update gBest
 			if ( fit > fitbest )    
 			{
 				fitbest = fit ;
@@ -83,11 +83,11 @@ int* PSO_CCLPSO::Evolve()
 			}
 		}  // end for
 
-		// 中止条件
+		// break condition
 		if ( it >= config.iteration )
 			break ;
 
-		// 更新粒子群
+		// update the swarm
 		int index = 0 ;
 		for( vector<Particle>::iterator i = T.begin() ; i != T.end() ; i++ , index++ )  
 		{

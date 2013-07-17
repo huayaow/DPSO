@@ -1,14 +1,14 @@
 /*
-** D-DMS-PSO
+** Discrete TVAC
 */
 #pragma once
 #include"PSO.h"
 #include"DParticle.h"
 
-class PSO_DDMS : public PSO
+class D_TVAC : public PSO
 {
 public:
-	PSO_DDMS( SUT* s )
+	D_TVAC( SUT* s )
 	{
 		sut = s ;
 	};
@@ -20,6 +20,6 @@ public:
 
 public:
 	int* Evolve();
-	void SetConfig( int par , int ite , double w , double f , double p1 , double p2 , double p3 );
+	void SetConfig( int par , int ite , double p1 , double p2 , double p3 );
 
 };

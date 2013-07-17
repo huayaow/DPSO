@@ -1,10 +1,7 @@
 /*
-** DPSO
+** Discrete PSO
 */
 #include"PSO_DPSO.h"
-
-#include<iostream>
-using namespace std;
 
 // ----------------------------------------------------------------------------
 // 设置及初始化
@@ -27,12 +24,6 @@ void PSO_DPSO::SetConfig( int par , int ite , double w , double f , double p1 , 
 // ----------------------------------------------------------------------------
 int* PSO_DPSO::Evolve()
 {
-	/*
-	ofstream outfile("result.txt",ios::app);
-	outfile<<"-------------------------------------"<<endl;
-	outfile<<"Evolve"<<endl;
-	outfile<<"-------------------------------------"<<endl;
-	*/
 
 	// 返回值
 	int *best = new int[sut->parameter] ;  
@@ -71,26 +62,6 @@ int* PSO_DPSO::Evolve()
 	// 生成一个测试用例，gBest
 	while( true )
 	{
-		/*
-		outfile<<"【round "<<it<<"】"<<endl;
-		vector<DParticle>::const_iterator xx = T.begin() + 10 ;
-		for( int k=0 ; k<sut->parameter; k++ )
-			outfile<<(*xx).position[k]<<" " ;
-		outfile<<endl;
-		for(map<PosVal,double>::const_iterator y=(*xx).velocity.begin() ; y!=(*xx).velocity.end() ; y++ )
-			outfile<<"("<<y->first.posI<<" , "<<y->first.valI<<") , "<<y->second<<endl;
-		
-		outfile<<"pbest : ";
-		for( int k=0 ; k<sut->parameter; k++ )
-			outfile<<(*xx).pbest[k]<<" " ;
-		outfile<<endl;
-		outfile<<"gbest : ";
-		for( int k=0 ; k<sut->parameter; k++ )
-			outfile<<gBest[k]<<" ";
-		outfile<<endl;
-		outfile<<endl;
-		*/
-
 		// 计算每个粒子的fitness值，并更新pbest，gbest
 		for( vector<DParticle>::iterator i = T.begin() ; i != T.end() ; i++ )
 		{
@@ -131,8 +102,6 @@ int* PSO_DPSO::Evolve()
 						gBest[c] = (*i).position[c] ;
 				}
 			}
-			
-
 		}  // end for
 
 		// 中止条件
@@ -169,24 +138,3 @@ int* PSO_DPSO::Evolve()
 
 	return best ;
 }
-
-/*
-double PSO_DPSO::HammingDist( const int *test )
-{
-	int hamming = 0 ;
-	if( PSO_Result.size() == 0 )
-		return 0 ;
-
-	for( vector<int*>::const_iterator i = PSO_Result.begin() ; i != PSO_Result.end() ; i++ )
-	{
-		int ham = 0 ;
-		for( int k=0 ; k<sut->parameter ; k++ )
-		{
-			if( test[k] != (*i)[k] )
-				ham++ ;
-		}
-		hamming += ham ;
-	}
-	double h = (double)hamming / (double)PSO_Result.size() ;
-	return h ;
-}*/
