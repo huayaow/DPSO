@@ -20,7 +20,7 @@ DPSO project implements both conventional version (CPSO) and discrete version (D
 
 ## Build & Run
 
-DPSO is tested under Windows 10 with GCC 4.8.1 (MinGW).
+DPSO is tested under Windows 10 with GCC 4.8.1 (MinGW), and Mac OS X 10.11 with Apple LLVM 6.1.0
 
 The generator firstly reads the `filename.model` file of SUT, and then invokes one of the PSO algorithms to construct a covering array. The result is stored in `filename.ca` file.
 
