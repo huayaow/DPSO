@@ -40,7 +40,7 @@ The generator firstly reads the `filename.model` file of SUT, and then invokes o
 
 	```
 	[algorihtm] :=  cpso  |  dpso  |					  # CPSO & DPSO
-			        ctvac | cclpso | cdmspso | capso |	# variants of CPSO
+			        ctvac | cclpso | cdmspso | capso |	  # variants of CPSO
 			        dtvac | dclpso | ddmspso | dapso	  # variants of DPSO
 	```
 
