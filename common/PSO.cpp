@@ -95,3 +95,39 @@ void PSO::PSOEvolve()
 		PSO_SIZE = PSO_SIZE + sut->seedInfo.size() ;
 	}
 }
+
+// ----------------------------------------------------------------------------
+// output this->PSO_Result to file
+// ----------------------------------------------------------------------------
+void PSO::writeThisResult(string filename, string info)
+{
+	ofstream file;
+	file.open(filename);
+
+	if (file.is_open())
+	{
+		// details of sut
+		file << "PARAMETER " << this->sut->parameter << endl;
+		file << "VALUE ";
+		for (int k = 0; k < this->sut->parameter; k++)
+			file << this->sut->value[k] << " ";
+		file << endl;
+		file << "TWAY " << this->sut->tway << endl;
+
+		// detail of info
+		file << "ALGORITHM " << info.c_str() << endl;
+
+		// ca
+		file << "SIZE " << PSO_SIZE << endl;
+		file << "TIME " << PSO_TIME << endl;
+		for (vector<int*>::iterator i = PSO_Result.begin(); i != PSO_Result.end(); i++)
+		{
+			for (int v = 0; v < this->sut->parameter; v++)
+				file << (*i)[v] << " ";
+			file << endl;
+		}
+		file << "END" << endl;
+		file.close();
+	}
+	
+}

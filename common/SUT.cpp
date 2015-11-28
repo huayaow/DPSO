@@ -1,6 +1,7 @@
 #include"SUT.h"
 
 #include<iostream>
+#include<cmath>
 using namespace std ;
 
 // ----------------------------------------------------------------------------
@@ -94,12 +95,12 @@ void SUT::preforseed()
 void SUT::GenerateS()
 {
 	// ≥ı ºªØ
-	if( AllS != NULL )
+	if( AllS != 0 )
 	{
 		for( int i=0 ; i<coverMax ; i++ )
 			delete[] AllS[i];
 		delete[] AllS;
-		AllS = NULL;
+		AllS = 0;
 	}
 	SCount = 0 ;
 

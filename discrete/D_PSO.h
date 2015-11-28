@@ -2,13 +2,13 @@
 ** Discrete PSO
 */
 #pragma once
-#include"PSO.h"
-#include"DParticle.h"
+#include "../common/PSO.h"
+#include "DParticle.h"
 
-class PSO_DPSO : public PSO
+class D_PSO : public PSO
 {
 public:
-	PSO_DPSO( SUT* s )
+	D_PSO( SUT* s )
 	{
 		sut = s ;
 	};

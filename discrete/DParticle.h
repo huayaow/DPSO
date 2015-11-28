@@ -22,6 +22,14 @@ struct PosVal
 		else
 			return false ;
 	}
+
+	bool operator = (PosVal const& _PV) const
+	{
+		if( posI == _PV.posI && valI == _PV.valI )
+			return true;
+		else
+			return false;
+	}
 };
 
 class DParticle
@@ -47,8 +55,8 @@ public:
 			ValMax[k] = comb ;
 		}
 
-		//position = NULL ;
-		//pbest = NULL ;
+		//position = 0 ;
+		//pbest = 0 ;
 		position = new int[dimension] ;
 		pbest= new int[dimension] ;
 	};
@@ -76,7 +84,7 @@ public:
 	int fitness_pbest ;
 
 	// 临时
-	set<pair<double,PosVal>> TempV ;
+	set< pair<double,PosVal> > TempV ;
 
 public:
 	void RandomInit() ;  // 随机初始化

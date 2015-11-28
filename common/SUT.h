@@ -46,7 +46,7 @@ public:
 			value[i] = v[i] ;
 		tway = t ;
 
-		AllS = NULL ;
+		AllS = 0 ;
 		coverMain = cal_combine( p , t ) ;  	
 	    coverMax = coverMain ;
 		testcaseCoverMax = coverMax ;
@@ -54,12 +54,12 @@ public:
 	~SUT()
 	{
 		delete[] value ;
-		if( AllS != NULL )
+		if( AllS != 0 )
 		{
 			for( int i=0 ; i<coverMax ; i++ )
 				delete[] AllS[i];
 			delete[] AllS;
-			AllS = NULL;
+			AllS = 0;
 		}
 		for( vector<SUBINFO>::iterator i = subInfo.begin() ; i != subInfo.end() ; i++ )
 			delete[] (*i).subposition;

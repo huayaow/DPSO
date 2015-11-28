@@ -1,14 +1,14 @@
 /*
-** Discrete DMS-PSO
+** Discrete CLPSO
 */
 #pragma once
-#include"PSO.h"
-#include"DParticle.h"
+#include "../common/PSO.h"
+#include "DParticle.h"
 
-class D_DMSPSO : public PSO
+class D_CLPSO : public PSO
 {
 public:
-	D_DMSPSO( SUT* s )
+	D_CLPSO( SUT* s )
 	{
 		sut = s ;
 	};

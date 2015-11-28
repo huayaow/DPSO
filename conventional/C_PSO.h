@@ -2,13 +2,13 @@
 ** Conventional PSO
 */
 #pragma once
-#include"PSO.h"
-#include"Particle.h"
+#include "../common/PSO.h"
+#include "Particle.h"
 
-class PSO_CPSO : public PSO
+class C_PSO : public PSO
 {
 public:
-	PSO_CPSO( SUT* s )
+	C_PSO( SUT* s )
 	{
 		sut = s ;
 	};

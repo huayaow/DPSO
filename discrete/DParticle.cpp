@@ -6,7 +6,7 @@ void DParticle::clear()
 	velocity.clear();
 	TempV.clear();
 	delete[] pbest ;
-	range = NULL ;
+	range = 0 ;
 	delete[] ValMax ;
 }
 
@@ -228,7 +228,7 @@ void DParticle::velocityUpdate( double weight , double factor1 , double factor2 
 	for( map<PosVal,double>::iterator x = velocity.begin() ; x != velocity.end() ; )
 	{
 		if( x->second < prob1 )
-			x = velocity.erase(x) ;
+			velocity.erase(x++) ;	// x = velocity.erase(x) ?
 		else
 		{
 			if( x->second > 1.0 )
@@ -278,7 +278,7 @@ void DParticle::positionUpdate( double prob2, double prob3 )
 
 	// update
 	int parcount = dimension ;
-	for( set<pair<double,PosVal>>::reverse_iterator iter = TempV.rbegin() ; iter != TempV.rend() ; iter++ )
+	for( set< pair<double,PosVal> >::reverse_iterator iter = TempV.rbegin() ; iter != TempV.rend() ; iter++ )
 	{
 		if( (double)(rand()%1000)/1000.0 < iter->first )
 		{
@@ -371,7 +371,7 @@ void DParticle::velocityUpdate_Comprehensive( double weight , double factor, dou
 	for( map<PosVal,double>::iterator x = velocity.begin() ; x != velocity.end() ; )
 	{
 		if( x->second < prob1 )
-			x = velocity.erase(x) ;
+			velocity.erase(x++) ;	// x = velocity.erase(x) ?
 		else
 		{
 			if( x->second > 1.0 )

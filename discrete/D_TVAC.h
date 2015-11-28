@@ -2,8 +2,8 @@
 ** Discrete TVAC
 */
 #pragma once
-#include"PSO.h"
-#include"DParticle.h"
+#include "../common/PSO.h"
+#include "DParticle.h"
 
 class D_TVAC : public PSO
 {

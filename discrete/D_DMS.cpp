@@ -4,7 +4,6 @@
 #include"D_DMSPSO.h"
 
 #include<iostream>
-#include"Windows.h"
 using namespace std;
 
 // ----------------------------------------------------------------------------

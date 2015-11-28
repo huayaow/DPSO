@@ -1,29 +1,63 @@
-# Alg_CombPSO
+# DPSO
 
-Alg_CombPSO focusses on covering array generation with particle swarm optimization(PSO). It is a Visual Studio project.
+DPSO project focuses on improving the performance of Particle Swarm Optimization (PSO) for covering array generation.
 
-Alg_CombPSO has implemented two differnet approaches based on differnet representations of particle's velocity, including:
+A covering array is a mathematical object that systematically covers the interactions among a fixed number of factors. It can be used for software testing purposes, i.e. combinatorial testing.
 
-* Convenrional PSO
+To enhance conventioanal PSO algorithms, DPSO utilizes the set and probability theories to represent particle's velocity, and refines the related evolution operators. DPSO futhrther applies two auxiliary strategies to enhance the effectiveness of search. The details of DPSO are in the following paper:
 
-* Discrete PSO
+> H. Wu, C. Nie, F.C. Kuo, h. Leung and C.J. Colbourn, "A Discrete Particle Swarm Optimization for Covering Array Generation," IEEE Transactions on Evolutionary Computation, 19(4): 575-591, 2015
 
-Four PSO variants (both convenrional and discrete versions) are also implemeted:
+DPSO project implements both conventional PSO version (CPSO) and discrete PSO verion (DPSO) for covering array generation. It also exteneds four famous PSO variants to their discrete versions.
 
-* Time-Varying Acceleration Coefficients (TVAC)
+* Time-Varying Acceleration Coefficients (TVAC) [1]
 
-* Comprehensive Learning PSO (CLPSO)
+* Comprehensive Learning PSO (CLPSO) [2]
 
-* Multi-Swarm PSO (DMS-PSO)
- 
-* Adaptive PSO (APSO)
+* Multi-Swarm PSO (DMS-PSO) [3]
+
+* Adaptive PSO (APSO) [4]
+
+## Build & Run
+
+DPSO is tested under Windows 10 with GCC 4.8.1 (MinGW).
+
+The generator firstly reads the `filename.model` file of SUT, and then invokes one of the PSO algorithms to construct a covering array. The result is stored in `filename.ca` file.
+
+1. Build this project
+
+	```
+	make
+	```
+
+2. Run it.
+
+	```
+	gen algorithm filename
+	```
+
+	The algorithm option:
+
+	```
+	algorihtm = cpso | dpso |
+			  = ctvac | cclpso | cdmspso | capso |
+			  = dtvac | dclpso | ddmspso | dapso
+	```
+
+	The `filename.model` should follow the format, which represents CA(N;2,3^7)
+
+	```
+	parameter 7
+	value 3 3 3 3 3 3 3
+	tway 2
+	```
 
 ## Reference:
 
-[1] A. Ratnaweera, S. Halgamuge, and H. Watson, "Self-organizing hierarchical particle swarm optimizer with time-varying acceleration coefficients," Evolutionary Computation, IEEE Transactions on, vol.8, no.3, 2004.
+[1] A. Ratnaweera, S. Halgamuge, and H. Watson, "Self-organizing hierarchical particle swarm optimizer with time-varying acceleration coefficients," IEEE Transactions on Evolutionary Computation, 8(3), 2004
 
-[2] J. Liang, A. Qin, P. Suganthan, and S. Baskar, "Comprehensive learning particle swarm optimizer for global optimization of multimodal functions," Evolutionary Computation, IEEE Transactions on, vol.10, no.3, 2006.
+[2] J. Liang, A. Qin, P. Suganthan, and S. Baskar, "Comprehensive learning particle swarm optimizer for global optimization of multimodal functions," IEEE Transactions on Evolutionary Computation, 10(3), 2006
 
-[3] J. Liang and P. Suganthan, "Dynamic multi-swarm particle swarm optimizer," in Swarm Intelligence Symposium, 2005. SIS 2005. Proceedings 2005 IEEE, june 2005, pp.124-129.
+[3] J. Liang and P. Suganthan, "Dynamic multi-swarm particle swarm optimizer," in Swarm Intelligence Symposium, proceedings of Swarm Intelligence Symposium, pp.124-129, 2005
 
-[4] Z. hui Zhan, J. Zhang, Y. Li, and H.-H. Chung, "Adaptive particle swarm optimization," Systems, Man, and Cybernetics, Part B: Cybernetics, IEEE Transactions on, vol. 39, no. 6, pp. 13621381, dec.2009.
+[4] Z. hui Zhan, J. Zhang, Y. Li, and H.-H. Chung, "Adaptive particle swarm optimization," IEEE Transactions on Systems, Man, and Cybernetics, Part B: Cybernetics, 39(6) 2009

@@ -6,8 +6,8 @@
 **     Evolutionary Computation, IEEE Transactions on, vol.8, no.3, 2004.
 */
 #pragma once
-#include"PSO.h"
-#include"Particle.h"
+#include "../common/PSO.h"
+#include "Particle.h"
 
 class C_TVAC : public PSO
 {

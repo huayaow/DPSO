@@ -6,8 +6,8 @@
 **     IEEE Transactions on, vol. 39, no. 6, pp. 1362 ¨C1381, dec. 2009.
 */
 #pragma once
-#include"PSO.h"
-#include"Particle.h"
+#include "../common/PSO.h"
+#include "Particle.h"
 
 class C_APSO : public PSO
 {
