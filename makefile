@@ -16,10 +16,10 @@ Objects = ${Common: .cpp=.o} ${Conventional: .cpp=.o} ${Discrete: .cpp=.o}
 all : $(Target)
 
 $(Target) : $(Objects) main.o
-	$(CC) $(Objects) main.o -o $(Target)
+	$(CC) -O2 $(Objects) main.o -o $(Target)
 
 main.o : main.cpp
-	$(CC) -c main.cpp -o main.o
+	$(CC) -O2 -c main.cpp -o main.o
 
 # Clean target
 .PHONY : clean

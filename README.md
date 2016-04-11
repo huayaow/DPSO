@@ -4,39 +4,52 @@ DPSO project focuses on improving the performance of Particle Swarm Optimization
 
 A covering array is a mathematical object that systematically covers the interactions among a fixed number of factors. It can be used for software testing purposes, i.e. combinatorial testing.
 
-To enhance conventional PSO algorithms, DPSO utilizes the set and probability theories to represent particle's velocity, and refines the related evolution operators. DPSO further applies two auxiliary strategies to enhance the effectiveness of search. The details of DPSO are in the following paper:
+To enhance conventional PSO algorithm for covering array generation, DPSO utilizes the set and probability theories to represent particle's velocity, and refines related evolution operators. DPSO further applies two auxiliary strategies to enhance the effectiveness of search. The details of DPSO are in the following paper:
 
 > H. Wu, C. Nie, F.C. Kuo, h. Leung and C.J. Colbourn, "A Discrete Particle Swarm Optimization for Covering Array Generation," IEEE Transactions on Evolutionary Computation, 19(4): 575-591, 2015
 
-DPSO project implements both conventional version (CPSO) and discrete version (DPSO) of PSO for covering array generation. It also extends four famous PSO variants to their discrete versions.
+This project implements both conventional version (CPSO) and discrete version (DPSO) of PSO for covering array generation. It also extends four famous PSO variants to their discrete versions.
 
-* TVAC: Time-Varying Acceleration Coefficients [1]
+* *TVAC*: Time-Varying Acceleration Coefficients [1]
 
-* CLPSO: Comprehensive Learning PSO [2]
+* *CLPSO*: Comprehensive Learning PSO [2]
 
-* DMS-PSO: Multi-Swarm PSO [3]
+* *DMS-PSO*: Multi-Swarm PSO [3]
 
-* APSO: Adaptive PSO [4]
+* *APSO*: Adaptive PSO [4]
+
+Moverover, as evolutionary algorithms are highly impacted by their parameter settings, we have conducted parameter tunings for both CPSO and DPSO. The recommended parameter settings for covering array generation are as follows:
+
+|                       | CPSO | DPSO |
+|:----------------------|:----:|:----:|
+| population size       | 80   | 80   |
+| maximum iteration     | 250  | 250  |
+| inertia weight        | 0.9  | 0.5  |
+| acceleration constant | 1.3  | 1.3  |
+| p1                    |      | 0.5  |
+| p2                    |      | 0.3  |
+| p3                    |      | 0.7  |
+
 
 ## Build & Run
 
-DPSO is tested under Windows 10 with GCC 4.8.1 (MinGW), and Mac OS X 10.11 with Apple LLVM 6.1.0
+DPSO is tested under Windows 10 with GCC 5.3.0 (MinGW-64), and Mac OS X 10.11 with Apple LLVM 6.1.0
 
-The generator firstly reads the `filename.model` file of SUT, and then invokes one of the PSO algorithms to construct a covering array. The result is stored in `filename.ca` file.
+The generator firstly reads the `filename.model` file of SUT, and then invokes one of the PSO algorithms to construct a covering array. The result is written to `filename.ca` file.
 
-1. Build this project.
+1. Build.
 
 	```
 	make
 	```
 
-2. Run it.
+2. Run.
 
 	```
-	gen [algorithm] [filename]
+	gen [algorithm] [filename]							# for example: gen dpso example
 	```
 
-	All support algorithms:
+	All supported algorithms:
 
 	```
 	[algorihtm] :=  cpso  |  dpso  |					  # CPSO & DPSO
@@ -44,7 +57,7 @@ The generator firstly reads the `filename.model` file of SUT, and then invokes o
 			        dtvac | dclpso | ddmspso | dapso	  # variants of DPSO
 	```
 
-	The `filename.model` should follow the format, which represents CA(N;2,3^7):
+	The `filename.model` should be the following format, which represents CA(N;2,3^7):
 
 	```
 	parameter 7
