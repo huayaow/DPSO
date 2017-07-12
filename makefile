@@ -1,25 +1,30 @@
 # Specify compiler
-CC = g++ -std=c++11
+CC = g++ -std=c++11 -DNDEBUG -O2
 
 # Target
-Target = gen
+Target = DPSO
 
 # Source & Objects
 Common = $(wildcard common/*.cpp)
-Conventional = $(wildcard conventional/*.cpp)
-Discrete = $(wildcard discrete/*.cpp)
+CommonIO = $(wildcard common/io/*.cpp)
+PSO = $(wildcard pso/*.cpp)
+Variants = $(wildcard pso/variants/*.cpp)
 
-Objects = ${Common: .cpp=.o} ${Conventional: .cpp=.o} ${Discrete: .cpp=.o}
+Objects = Sovler.o ${Common: .cpp=.o} ${CommonIO: .cpp=.o} ${PSO: .cpp=.o} \
+          ${Variants: .cpp=.o}
 
 # Target
 .PHONY : all
 all : $(Target)
 
+Sovler.o : ./minisat/solver/Solver.C
+	$(CC) $(CFLAGS)  -I ./minisat/include -c -o $@ $^
+
 $(Target) : $(Objects) main.o
-	$(CC) -O2 $(Objects) main.o -o $(Target)
+	$(CC) $(Objects) main.o -o $(Target)
 
 main.o : main.cpp
-	$(CC) -O2 -c main.cpp -o main.o
+	$(CC) -c main.cpp -o main.o
 
 # Clean target
 .PHONY : clean

@@ -1,9 +1,10 @@
 #pragma once
 
-#include<vector>
+#include <vector>
+#include "Comb.h"
+#include "SATSolver.h"
 using namespace std;
 
-// 结构定义 : 位运算
 typedef unsigned char byte ;
 struct Bits
 {
@@ -22,103 +23,136 @@ union MyByte
 	struct Bits bit;
 };
 
-// 子覆盖信息
-struct SUBINFO
+/**
+ * Requirement of variable covering strength
+ */
+struct SubInfo
 {
-	// subway表示强度，subparameter表示参数个数，subposition[subparameter]表示参数位置
-	int subway ;
-	int subparameter ;
-	int *subposition ;
-	// 将在初始化时赋值，标记在AllS中位置
-	int coverIndex ;  //  在AllS中行下标
-	int coverSub ;    //  C( subparameter , subway )
+	int subWay;         // covering strength
+	int subParameter;   // number of parameters involved
+	int* subPosition;   // the position of each parameter
+
+  // the followings will be initialized in initializeCombination()
+  int coverIndex ;    // the index in AllS
+	int coverSub ;      // C(subParameter, subWay)
 };
 
-class SUT
-{
-	// 构造函数
+/**
+ * Testing Model
+ */
+class SUT {
+
 public:
-	SUT( int p , const int *v , int t )
-	{
-		parameter = p ;
+	SUT( int p , const int *v , int t ) : parameter(p), tway(t) {
 		value = new int[p] ;
 		for( int i = 0 ; i < p ; i++ )
 			value[i] = v[i] ;
-		tway = t ;
 
-		AllS = 0 ;
-		coverMain = cal_combine( p , t ) ;  	
-	    coverMax = coverMain ;
-		testcaseCoverMax = coverMax ;
+		AllS = nullptr ;
+		coverMain = combine(p, t);
+    coverMax = coverMain;
+		testcaseCoverMax = coverMain;
+
+    relations = new int*[parameter];
+    int start = 1;
+    for (int i = 0; i < parameter; i++) {
+      relations[i] = new int[value[i]];
+      for (int j = 0; j < value[i]; j++, start++)
+        relations[i][j] = start;
+    }
+
 	};
 	~SUT()
 	{
 		delete[] value ;
-		if( AllS != 0 )
-		{
-			for( int i=0 ; i<coverMax ; i++ )
+    for( int i = 0 ; i < parameter ; i++ )
+      delete[] relations[i];
+    delete[] relations;
+
+		if( AllS != nullptr ) {
+			for( int i = 0 ; i < coverMax ; i++ )
 				delete[] AllS[i];
 			delete[] AllS;
-			AllS = 0;
+			AllS = nullptr;
 		}
-		for( vector<SUBINFO>::iterator i = subInfo.begin() ; i != subInfo.end() ; i++ )
-			delete[] (*i).subposition;
+
+		for( vector<SubInfo>::iterator i = subInfo.begin() ; i != subInfo.end() ; i++ )
+			delete[] (*i).subPosition;
 		subInfo.clear();
+
 		for( vector<int*>::iterator i = seedInfo.begin() ; i != seedInfo.end() ; i++ )
 			delete[] (*i) ;
 		seedInfo.clear();
 	}
 
-// 变量
+  //
+  // Model
+  //
 public:
-	// CA变量
 	int parameter ;
-	int *value ;
+	int* value ;
 	int tway ;
 	
-	// 子覆盖
-	vector<SUBINFO> subInfo ;
+	vector<SubInfo> subInfo ; 	// variable covering strength
+	vector<int*> seedInfo ;     // seed
 
-	// 种子 
-	vector<int*> seedInfo ;
-	
+  //
+  // Constraint
+  //
 protected:
-	// 存储所有应覆盖组合情况，以及记录还未覆盖组合数
-	MyByte **AllS ;    // 该位为0表示未覆盖
+  int** relations;     // mapping between parameter value and variable in CNF, start from 1
+  SATSolver solver ;   // SAT solver
 
 public:
-	int coverMain ;    // 记录Main行数，C(parameter,tway)
-	int coverMax ;     // 记录AllS总行数，Main+AllSub
-	int SCountAll ;    // 总的待覆盖组合数
-	int SCount ;       // 未覆盖组合数
-	int testcaseCoverMax ;   // 一个测试用例最多能覆盖组合数
-	
-// 方法
+  // set constraint based on the results obtained from ConstraintFile
+  void setConstraint(const vector<InputClause> &clause);
+  // whether a test case is valid
+  bool isValid(const int* test);
+  // whether a combination is valid
+  bool isValid(const int* pos, const int* sch, int strength);
+
+  //
+  // Combinations to be covered
+  //
 public:
-	// 其余信息初始化
-	void SetSub( const vector<SUBINFO> sub );
-	void SetSeed( const vector<int*> seed ); 
+  int coverMain ;  // C(parameter,tway), for uniform covering
+  int coverMax ;   // C(parameter,tway) + AllSub, for variable covering
+  int SCountAll ;  // total number of combinations to be covered
+  int SCount ;     // number of yet uncovered combinations
+  int testcaseCoverMax ;  // maximum number of combination that can be covered by a test case
 
-	// 生成AllS
-        void GenerateS();
-	void GenerateSSub();
+protected:
+  MyByte** AllS ;  // each combination to be covered
 
-	// 计算fitness
-	int FitnessValue( const int *test , int FLAG );
-	int FitnessValueSub( const int *test , int FLAG );
+public:
+  // set variable strength covering requirement
+	void appendVariableStrength(int para, const int *position, int strength);
+	// initialize all combinations to be covered
+  void initializeCombination();
+	// compute fitness value of each test case
+	int fitnessValue(const int *test, int FLAG);
+	// whether a combination is covered or not
+  bool covered(const int *pos, const int *val, int FLAG);
+	// seed
+  void setSeed(const vector<int*> seed);
 
-	// 判断是否覆盖
-        bool Covered( const int *pos , const int *sch , int FLAG );
-	bool Covered( const int *pos , const int *sch , vector<SUBINFO>::const_iterator sub , int FLAG );
-
-	// 种子预处理
-	void preforseed();
+  void show() {
+    cout << "-----------------------------" << endl;
+    cout << "Parameter = " << parameter << ", t-way = " << tway << endl;
+		cout << "Constraint = " << solver.isEnabled() << endl;
+    cout << "coverMain = " << coverMain << endl;
+    cout << "coverMax = " << coverMax << endl;
+    cout << "SCount = " << SCount << endl;
+    cout << "-----------------------------" << endl;
+  }
 
 private:
-	// private 计算用函数
-	int cal_combine( int n , int m );
-	int cal_combine2num( const int *c , const int n , const int m );    
-	void cal_num2combine( int *c , int t , const int n , const int m );
+  // methods to deal with variable strength covering requirement
+  void initializeCombinationSub();
+  int fitnessValueSub(const int *test, int FLAG);
+  bool coveredSub(const int *pos, const int *val, const SubInfo sub, int FLAG);
+  // method to update AllS
+  void coveredBit(MyByte &byte, int bit, bool &result, int FLAG);
 
 };
 

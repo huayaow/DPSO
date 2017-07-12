@@ -2,10 +2,15 @@
 *.txt
 *.exe
 *.o
-gen
-
-# result files
 *.ca
+test/
+
+# but not these
+!specification.txt
+!constraint.txt
+
+# executable file
+DPSO
 
 # Visio Studio files
 *.sln
@@ -13,10 +18,12 @@ gen
 *.vcxproj.filters
 *.opensdf
 *.sdf
-
 .vs/
 Debug/
 
+# IDE
+.idea/
+cmake-build-debug/
 
 # Mac crap
 .DS_Store

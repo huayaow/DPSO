@@ -1,638 +1,425 @@
-#include"SUT.h"
+#include "SUT.h"
+#include <cmath>
+#include <algorithm>
+using namespace std;
 
-#include<iostream>
-#include<cmath>
-using namespace std ;
+/**
+ * Set variable covering requirement.
+ * @param para
+ * @param position
+ * @param strength
+ */
+void SUT::appendVariableStrength(int para, const int *position, int strength) {
+  SubInfo x;
+  x.subParameter = para ;
+  x.subWay = strength ;
+  x.subPosition = new int[para];
+  copy(position, position + strength, x.subPosition);
 
-// ----------------------------------------------------------------------------
-//  计算函数，各变量下标从0开始
-// ----------------------------------------------------------------------------
-// 计算C(n,m)
-int SUT::cal_combine( int n , int m )   
-{
-	int ret = 1 ;
-	int p = n ;
-	for( int x=1 ; x<=m ; x++ , p-- )
-	{
-		ret = ret * p ;
-		ret = ret / x ;
-	}
-	return ret ;
-}
-// 计算c[]在所有组合的字典序中的序号，在n个参数中选m个情况下 (n,m)
-int SUT::cal_combine2num( const int *c , const int n , const int m )    
-{
-	int ret = cal_combine( n , m ) ;
-	for( int i=0 ; i<m ; i++ )
-		ret -= cal_combine( n-c[i]-1 , m-i );
-	ret--;
-	return ret ;                
-}
-// 计算字典序第t个的参数组合，结果存入c中，在n个参数中选m个情况下 (n,m)
-void SUT::cal_num2combine( int *c , int t , const int n , const int m )  
-{
-	t++;                        // 输入+1
-	int j=1 , k ;
-	for( int i=0 ; i<m ; c[i++]=j++ )
-		for( ; t>( k = cal_combine( n-j , m-i-1 ) ) ; t-=k , j++ )
-			;
-	for( int p=0 ; p<m ; p++ )   // 输出-1
-		c[p]--;
+  x.coverIndex = coverMax;
+  x.coverSub = combine(x.subParameter, x.subWay);
+
+  // update variables
+  coverMax += x.coverSub;
+  testcaseCoverMax = coverMax;
+  subInfo.push_back(x);
 }
 
-// ----------------------------------------------------------------------------
-// SUT初始化
-// ----------------------------------------------------------------------------
-// 子覆盖
-void SUT::SetSub( const vector<SUBINFO> sub )
-{
-	for( vector<SUBINFO>::const_iterator i = sub.begin() ; i != sub.end() ; i++ )
-	{
-		SUBINFO temp ;
-		temp.subparameter = (*i).subparameter ;
-		temp.subway = (*i).subway ;
-		temp.subposition = new int[temp.subparameter] ;
-		for( int k=0 ; k<temp.subparameter ; k++ )
-			temp.subposition[k] = (*i).subposition[k] ;
-		subInfo.push_back(temp);
-	}
-	// 计算行数
-	for( vector<SUBINFO>::iterator i = subInfo.begin() ; i != subInfo.end() ; i++ )
-	{
-		(*i).coverIndex = coverMax ;
-		(*i).coverSub = cal_combine( (*i).subparameter , (*i).subway );
-		coverMax += (*i).coverSub ;
-	}
-	// 一条测试用例最多覆盖数
-	testcaseCoverMax = coverMax ;
+/**
+ * Use a set of test cases as seed.
+ * @param seed
+ */
+void SUT::setSeed(const vector<int *> seed) {
+  for (auto each : seed) {
+    int *temp = new int[parameter];
+    for (int k = 0; k < parameter; k++)
+      temp[k] = each[k];
+    seedInfo.push_back(temp);
+  }
 }
 
-// 种子
-void SUT::SetSeed( const vector<int*> seed )
-{
-	for( vector<int*>::const_iterator i = seed.begin() ; i != seed.end() ; i++ )
-	{
-		int *temp = new int[parameter] ;
-		for( int k=0 ; k<parameter ; k++ )
-			temp[k] = (*i)[k] ;
-		seedInfo.push_back(temp);
-	}
+/**
+ * Initialize all combinations to be covered.
+ */
+void SUT::initializeCombination() {
+  if (AllS != nullptr) {
+    for (int i = 0; i < coverMax; i++)
+      delete[] AllS[i];
+    delete[] AllS;
+    AllS = nullptr;
+  }
+
+  SCount = 0;
+  AllS = new MyByte *[coverMax];
+
+  // for each parameter combination in Main part
+  int already = 0;
+  vector<int*> allP = allPos(parameter, tway);
+  for (auto pos : allP) {
+    // number of all value combinations
+    int allcomb = 1;
+    for (int p = 0; p < tway; p++)
+      allcomb = allcomb * value[pos[p]];
+
+    int column = (int) ceil((double) allcomb / (double) 8);
+    AllS[already] = new MyByte[column];
+    for (int k = 0; k < column; k++)
+      AllS[already][k].allbyte = 0x00;
+
+    SCount += allcomb;
+    already += 1;
+
+    // deal with constraint
+    if (solver.isEnabled()) {
+      for (auto val : allVal(pos, tway, value)) {
+        if (!isValid(pos, val, tway)) {
+          covered(pos, val, 1);
+        }
+      }
+    }
+  }
+  for_each(allP.begin(), allP.end(), default_delete<int>());
+  allP.clear();
+
+  // deal with variable covering strength
+  if (subInfo.size() != 0)
+    initializeCombinationSub();
+
+  // deal with seed
+  if (seedInfo.size() != 0) {
+    for (auto each : seedInfo)
+      fitnessValue(each, 1);
+  }
+
+  SCountAll = SCount;
 }
 
-// ----------------------------------------------------------------------------
-// 种子预处理，对所有Covered，在Evolve时再考虑加入
-// ----------------------------------------------------------------------------
-void SUT::preforseed()
-{
-	for( vector<int*>::const_iterator i = seedInfo.begin() ; i != seedInfo.end() ; i++ )
-		FitnessValue((*i),1);
+/**
+ * Initialize all combinations to be covered. Variable Strength Part.
+ */
+void SUT::initializeCombinationSub() {
+  for (auto each : subInfo) {
+    int t = each.subWay;
+    int para = each.subParameter;
+    int* position = each.subPosition;
+
+    int row = each.coverIndex;
+    int* pos = new int[t];
+    vector<int*> allP = allPos(para, t);
+    for (auto _pos : allP) {
+      // actual position
+      for (int k=0 ; k<t ; k++)
+        pos[k] = position[_pos[k]];
+
+      // number of all value combinations
+      int allcomb = 1;
+      for (int k = 0; k < t; k++)
+        allcomb = allcomb * value[_pos[k]];
+
+      int column = (int) ceil((double) allcomb / (double) 8);
+      AllS[row] = new MyByte[column];
+      for (int k = 0; k < column; k++)
+        AllS[row][k].allbyte = 0x00;
+
+      SCount += allcomb;
+
+      // deal with constraint with SubInfo
+      if (solver.isEnabled()) {
+        vector<int*> allV = allVal(pos, t, value);
+        for (auto val : allV) {
+          if (!isValid(pos, val, t)) {
+            coveredSub(pos, val, each, 1);
+          }
+        }
+        for_each(allV.begin(), allV.end(), default_delete<int>());
+        allV.clear();
+      }
+      // next row
+      row += 1 ;
+    }
+    for_each(allP.begin(), allP.end(), default_delete<int>());
+    allP.clear();
+    delete[] pos;
+  } // end for each sub
 }
 
+/**
+ * Compute the number of yet uncovered combinations that can be covered
+ * by a given test case. FLAG indicates whether to update AllS.
+ * @param test
+ * @param FLAG
+ * @return
+ */
+int SUT::fitnessValue(const int *test, int FLAG) {
+  int num = 0;
 
-// ----------------------------------------------------------------------------
-// 分配AllS空间，并生成
-// ----------------------------------------------------------------------------
-void SUT::GenerateS()
-{
-	// 初始化
-	if( AllS != 0 )
-	{
-		for( int i=0 ; i<coverMax ; i++ )
-			delete[] AllS[i];
-		delete[] AllS;
-		AllS = 0;
-	}
-	SCount = 0 ;
+  int* val = new int[tway];
+  vector<int*> allP = allPos(parameter, tway);
+  for (auto pos : allP) {
+    for (int k = 0; k < tway; k++)
+      val[k] = test[pos[k]];
 
-	// 分配coverMax行
-	AllS = new MyByte*[coverMax] ;
+    if (!covered(pos, val, FLAG))
+      num++;
+  }
+  for_each(allP.begin(), allP.end(), default_delete<int>());
+  allP.clear();
+  delete[] val;
 
-	// 按字典序生成所有参数间的组合情况
-	int *temp = new int[tway] ;      // 迭代记录
-	int *temp_max = new int[tway];   // 各自最大值
-	for( int k=0 ; k<tway ; k++ )  // 初始化
-	{
-		temp[k] = k ;
-		temp_max[k] = parameter - tway + k ;
-	}
+  if (subInfo.size() != 0)
+    num += fitnessValueSub(test, FLAG);
 
-	int end = tway - 1 ;
-	int ptr = end ;
-
-	int already = 0 ;
-	while( already < coverMain )
-	{
-		//
-		// 处理temp，此时temp[]标记了参数序号
-		//
-
-		// 计算涉及参数的组合个数
-		int allcomb = 1 ;
-		for( int p=0 ; p<tway ; p++ )
-			allcomb = allcomb * value[temp[p]] ;
-		// 生成新的1行
-		int column = (int)ceil((double)allcomb/(double)8) ; 
-		AllS[already] = new MyByte[column];
-		// 初始化，全为0
-		for( int k=0 ; k<column ; k++ )
-			AllS[already][k].allbyte = 0x00 ;
-
-		// 计算总的组合个数
-		SCount += allcomb ;
-
-		//
-		// 求下一个组合
-		//
-		temp[end] = temp[end] + 1 ;  // 末位加1
-		ptr = end ;
-		while( ptr > 0 )
-		{
-			if( temp[ptr] > temp_max[ptr] )  // 超过该位允许最大值
-			{
-				temp[ptr-1] = temp[ptr-1] + 1 ;   // 前一位加1
-				ptr-- ;
-			}
-			else
-				break ;
-		}
-		if( temp[ptr] <= temp_max[ptr])  // 若该位值不是最大，后面每位在前一位基础上加1
-		{
-			for( int i=ptr+1 ; i<tway ; i++ ) 
-				temp[i] = temp[i-1] + 1 ;
-		}
-		already++ ;
-	}
-
-	delete[] temp ;
-	delete[] temp_max ;
-
-	// 考虑子覆盖
-	if( subInfo.size() != 0 )
-		GenerateSSub();
-
-	// 处理种子
-	if( seedInfo.size() !=0 )
-		preforseed();
-
-	// 记录总的待覆盖组合数
-	SCountAll = SCount ;
+  return num;
 }
 
-// AllS中Sub部分
-void SUT::GenerateSSub()
-{
-	// 对每个sub
-	for( vector<SUBINFO>::iterator i = subInfo.begin() ; i != subInfo.end() ; i++ )
-	{
-		int subway = (*i).subway ;
-		int subparameter = (*i).subparameter ;
-		int *subposition = (*i).subposition ;
+/**
+ * Fitness value computation for variable strength part.
+ * @param test
+ * @param FLAG
+ * @return
+ */
+int SUT::fitnessValueSub(const int* test, int FLAG) {
+  int num = 0;
+  for (auto each : subInfo) {
+    int t = each.subWay;
+    int para = each.subParameter;
+    int *position = each.subPosition;
 
-		// 按字典序生成所有参数间的组合情况
-		int *subtemp = new int[subway] ;      // 迭代记录
-		int *subtemp_max = new int[subway];   // 各自最大值
-		for( int k=0 ; k<subway ; k++ )  // 初始化
-		{
-			subtemp[k] = k ;
-			subtemp_max[k] = subparameter - subway + k ;
-		}
+    int *pos = new int[t];
+    int *val = new int[t];
+    vector<int*> allP = allPos(para, t);
+    for (auto _pos : allP) {
+      // actual position
+      for (int k = 0; k < t; k++)
+        pos[k] = position[_pos[k]];
+      // actual value
+      for (int k = 0; k < t; k++)
+        val[k] = test[pos[k]];
 
-		int subend = subway - 1 ;
-		int subptr = subend ;
-
-		int subalready = 0 ;
-		int subrow = (*i).coverIndex ;
-		while( subalready < (*i).coverSub )
-		{
-			//
-			// 处理subtemp
-			// subtemp[]是按[0,1,...]标号的，subtemp[]的各值代表在subposition[]中的位置
-			//
-
-			// 计算涉及参数的组合个数
-			int suballcomb = 1 ;
-			for( int p=0 ; p<subway ; p++ )
-				suballcomb = suballcomb * value[subposition[subtemp[p]]] ;
-			// 生成新的1行
-			int subcolumn = (int)ceil((double)suballcomb/(double)8) ; 
-			AllS[subrow] = new MyByte[subcolumn];
-			// 初始化，全为0
-			for( int k=0 ; k<subcolumn ; k++ )
-				AllS[subrow][k].allbyte = 0x00 ;
-
-			// 计算总的组合个数
-			SCount += suballcomb ;
-
-			//
-			// 求下一个组合
-			//
-			subtemp[subend] = subtemp[subend] + 1 ;  // 末位加1
-			subptr = subend ;
-			while( subptr > 0 )
-			{
-				if( subtemp[subptr] > subtemp_max[subptr] )  // 超过该位允许最大值
-				{
-					subtemp[subptr-1] = subtemp[subptr-1] + 1 ;   // 前一位加1
-					subptr-- ;
-				}
-				else
-					break ;
-			}
-			if( subtemp[subptr] <= subtemp_max[subptr])  // 若该位值不是最大，后面每位在前一位基础上加1
-			{
-				for( int i=subptr+1 ; i<subway ; i++ ) 
-					subtemp[i] = subtemp[i-1] + 1 ;
-			}
-			// row++
-			subrow++;
-			subalready++ ;
-		}
-		delete[] subtemp ;
-		delete[] subtemp_max ;
-
-	} // end for each sub
-}
-
-// ----------------------------------------------------------------------------
-// 计算测试用例test在未覆盖组合对集S中能覆盖的组合对数
-// 标记FLAG=0只计算不修改，FLAG=1则将覆盖的组合情况设置为已覆盖
-// 输入：一个测试用例test，标记FLAG
-// 输出：覆盖组合数
-// ----------------------------------------------------------------------------
-int SUT::FitnessValue( const int *test , int FLAG )
-{
-	int num = 0 ;   // 返回值
-
-	// 依次按字典序生成test的各种组合情况，然后从AllS表中判断是否覆盖，O(C(par,tway))
-
-	int *pos = new int[tway] ;      // 储存参数情况
-	int *pos_max = new int[tway];   // 各自最大值
-	for( int k=0 ; k<tway ; k++ )  // 初始化
-	{
-		pos[k] = k ;
-		pos_max[k] = parameter - tway + k ;
-	}
-	int end = tway - 1 ;
-	int ptr = end ;
-
-	int *sch = new int[tway] ;  // 存储取值的情况
-
-	for( int row = 0 ; row < coverMain ; row++ )
-	{
-		// 得到组合情况
-		for( int k=0 ; k<tway ; k++ )
-			sch[k] = test[pos[k]] ;
-		// 判断是否覆盖
-		if( !Covered( pos , sch , FLAG ) )
-			num++ ;
-
-		// 生成一下个
-		pos[end] = pos[end] + 1 ;  // 末位加1
-		ptr = end ;
-		while( ptr > 0 )
-		{
-			if( pos[ptr] > pos_max[ptr] )  // 超过该位允许最大值
-			{
-				pos[ptr-1] = pos[ptr-1] + 1 ;   // 前一位加1
-				ptr-- ;
-			}
-			else
-				break ;
-		}
-		if( pos[ptr] <= pos_max[ptr])  // 若该位值不是最大，后面每位在前一位基础上加1
-		{
-			for( int i=ptr+1 ; i<tway ; i++ ) 
-				pos[i] = pos[i-1] + 1 ;
-		}
-	}
-	delete[] pos;
-	delete[] pos_max;
-	delete[] sch;
-
-	if( subInfo.size() !=  0 )
-		num += FitnessValueSub( test , FLAG );
-
-	return num ;
-}
-
-// Sub部分
-int SUT::FitnessValueSub( const int *test , int FLAG )
-{
-	int subnum = 0 ;   // 返回值
-
-	// 对每个Sub
-	for( vector<SUBINFO>::iterator i = subInfo.begin() ; i != subInfo.end() ; i++ )
-	{
-		int subway = (*i).subway ;
-		int subparameter = (*i).subparameter ;
-		int *subposition = (*i).subposition ;
-		// 依次按字典序生成test的各种组合情况，然后从AllS表中判断是否覆盖，O(C(subpar,subway))
-
-		int *subpos = new int[subway] ;      // 储存参数情况
-		int *subpos_max = new int[subway];   // 各自最大值
-		for( int k=0 ; k<subway ; k++ )  // 初始化
-		{
-			subpos[k] = k ;
-			subpos_max[k] = subparameter - subway + k ;
-		}
-		int subend = subway - 1 ;
-		int subptr = subend ;
-
-		int *subsch = new int[subway] ;  // 存储取值的情况
-
-		for( int row = 0 ; row < (*i).coverSub ; row++ )
-		{
-			// 得到组合情况
-			for( int k=0 ; k<subway ; k++ )
-				subsch[k] = test[subposition[subpos[k]]] ;
-
-			// 判断是否覆盖
-			if( !Covered( subpos , subsch , i , FLAG ) )
-				subnum++ ;
-
-			// 生成一下个
-			subpos[subend] = subpos[subend] + 1 ;  // 末位加1
-			subptr = subend ;
-			while( subptr > 0 )
-			{
-				if( subpos[subptr] > subpos_max[subptr] )  // 超过该位允许最大值
-				{
-					subpos[subptr-1] = subpos[subptr-1] + 1 ;   // 前一位加1
-					subptr-- ;
-				}
-				else
-					break ;
-			}
-			if( subpos[subptr] <= subpos_max[subptr])  // 若该位值不是最大，后面每位在前一位基础上加1
-			{
-				for( int i=subptr+1 ; i<subway ; i++ ) 
-					subpos[i] = subpos[i-1] + 1 ;
-			}
-		}
-		delete[] subpos;
-		delete[] subpos_max;
-		delete[] subsch;
-	}
-
-	return subnum ;
-}
-
-// ----------------------------------------------------------------------------
-// 计算一个取值情况是否覆盖，其中pos存储参数字典序号，sch存储对应取值
-// 输入：pos[tway]，sch[tway]，FLAG=1则表示未覆盖时需要将该位置1
-// 输出：true为已覆盖，false为未覆盖
-// ----------------------------------------------------------------------------
-bool SUT::Covered( const int *pos , const int *sch , int FLAG )
-{
-	// 通过position计算得到行号，schema计算得到列号，查AllS得出结果，接近O(1)
-
-	bool ret = true ;  // 返回值
-
-	// 存储行列信息
-	int row = 0 ;
-	int column = 0 ;       // 哪一个BYTE
-	int column_bit = 0 ;   // 哪一个bit
-
-	// 计算row，下标从0开始计算
-	row = cal_combine2num( pos , parameter , tway );
-
-	// 计算column，下标从0开始计算
-	int Index = 0 ;
-	int it = 0 ;
-	for( int i=0 ; i<tway ; i++ )
-	{
-		it = sch[i] ;
-		for( int j=i+1 ; j<tway ; j++ )
-			it = value[pos[j]] * it ;
-		Index += it ;
-	}
-
-	column = Index / 8 ;
-	column_bit = Index % 8 ;
-
-	MyByte byte = AllS[row][column] ;
-	switch( column_bit )
-	{
-	case 0:
-		if( !byte.bit.bit0 )   
-		{
-			ret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[row][column].bit.bit0 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 1:
-		if( !byte.bit.bit1 )   
-		{
-			ret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[row][column].bit.bit1 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 2:
-		if( !byte.bit.bit2 )   
-		{
-			ret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[row][column].bit.bit2 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 3:
-		if( !byte.bit.bit3 )   
-		{
-			ret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[row][column].bit.bit3 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 4:
-		if( !byte.bit.bit4 )   
-		{
-			ret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[row][column].bit.bit4 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 5:
-		if( !byte.bit.bit5 )   
-		{
-			ret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[row][column].bit.bit5 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 6:
-		if( !byte.bit.bit6 )   
-		{
-			ret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[row][column].bit.bit6 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 7:
-		if( !byte.bit.bit7 )   
-		{
-			ret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[row][column].bit.bit7 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	}
-	return ret ;
-}
-
-// Sub部分
-// 其中pos存储子覆盖中对应字典序号，真实参数位置在sub.subposition中，sch存储对应取值
-bool SUT::Covered( const int *pos , const int *sch , vector<SUBINFO>::const_iterator sub , int FLAG )
-{
-	int subway = (*sub).subway ;
-	int subparameter = (*sub).subparameter ;
-	int *subposition = (*sub).subposition ;
-
-	// 通过position计算得到行号，schema计算得到列号，查AllS得出结果，接近O(1)
-
-	bool subret = true ;  // 返回值
-
-	// 存储行列信息
-	int subrow = (*sub).coverIndex ;
-	int subcolumn = 0 ;       // 哪一个BYTE
-	int subcolumn_bit = 0 ;   // 哪一个bit
-
-	// 计算row，下标从0开始计算
-	subrow += cal_combine2num( pos , subparameter , subway );
-
-	// 计算column，下标从0开始计算
-	int subIndex = 0 ;
-	int it = 0 ;
-	for( int i=0 ; i<subway ; i++ )
-	{
-		it = sch[i] ;
-		for( int j=i+1 ; j<subway ; j++ )
-			it = value[subposition[pos[j]]] * it ;
-		subIndex += it ;
-	}
-
-	subcolumn = subIndex / 8 ;
-	subcolumn_bit = subIndex % 8 ;
-
-	MyByte byte = AllS[subrow][subcolumn] ;
-	switch( subcolumn_bit )
-	{
-	case 0:
-		if( !byte.bit.bit0 )   
-		{
-			subret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[subrow][subcolumn].bit.bit0 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 1:
-		if( !byte.bit.bit1 )   
-		{
-			subret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[subrow][subcolumn].bit.bit1 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 2:
-		if( !byte.bit.bit2 )   
-		{
-			subret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[subrow][subcolumn].bit.bit2 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 3:
-		if( !byte.bit.bit3 )   
-		{
-			subret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[subrow][subcolumn].bit.bit3 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 4:
-		if( !byte.bit.bit4 )   
-		{
-			subret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[subrow][subcolumn].bit.bit4 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 5:
-		if( !byte.bit.bit5 )   
-		{
-			subret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[subrow][subcolumn].bit.bit5 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 6:
-		if( !byte.bit.bit6 )   
-		{
-			subret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[subrow][subcolumn].bit.bit6 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	case 7:
-		if( !byte.bit.bit7 )   
-		{
-			subret = false ;
-			if( FLAG==1 ) 
-			{
-				AllS[subrow][subcolumn].bit.bit7 = 1 ;
-				SCount--;
-			}
-		}
-		break ;
-	}
-	return subret ;
+      if (!coveredSub(_pos, val, each, FLAG))
+        num++;
+    }
+    for_each(allP.begin(), allP.end(), default_delete<int>());
+    allP.clear();
+    delete[] pos;
+    delete[] val;
+  }
+  return num;
 }
 
 
+/**
+ * Determine whether a combination is covered or not. If FLAG = true,
+ * then update AllS to make this combination as covered.
+ * @param pos
+ * @param val
+ * @param FLAG
+ * @return
+ */
+bool SUT::covered(const int* pos, const int* val, int FLAG) {
+  bool ret = true;
 
+  int row = pos2num(pos, parameter, tway);
+  int column = 0;       // which BYTE
+  int column_bit = 0;   // which bit
+
+  int Index = 0, it = 0;
+  for (int i = 0; i < tway; i++) {
+    it = val[i];
+    for (int j = i + 1; j < tway; j++)
+      it = value[pos[j]] * it;
+    Index += it;
+  }
+
+  column = Index / 8;
+  column_bit = Index % 8;
+
+  coveredBit(AllS[row][column], column_bit, ret, FLAG);
+  return ret;
+}
+
+/**
+ * Deal with each bit in MyByte.
+ * @param byte
+ * @param bit
+ * @param result
+ * @param FLAG
+ */
+void SUT::coveredBit(MyByte &byte, int bit, bool &result, int FLAG) {
+  switch (bit) {
+    case 0:
+      if (!byte.bit.bit0) {
+        result = false;
+        if (FLAG == 1) {
+          byte.bit.bit0 = 1;
+          SCount--;
+        }
+      }
+      break;
+    case 1:
+      if (!byte.bit.bit1) {
+        result = false;
+        if (FLAG == 1) {
+          byte.bit.bit1 = 1;
+          SCount--;
+        }
+      }
+      break;
+    case 2:
+      if (!byte.bit.bit2) {
+        result = false;
+        if (FLAG == 1) {
+          byte.bit.bit2 = 1;
+          SCount--;
+        }
+      }
+      break;
+    case 3:
+      if (!byte.bit.bit3) {
+        result = false;
+        if (FLAG == 1) {
+          byte.bit.bit3 = 1;
+          SCount--;
+        }
+      }
+      break;
+    case 4:
+      if (!byte.bit.bit4) {
+        result = false;
+        if (FLAG == 1) {
+          byte.bit.bit4 = 1;
+          SCount--;
+        }
+      }
+      break;
+    case 5:
+      if (!byte.bit.bit5) {
+        result = false;
+        if (FLAG == 1) {
+          byte.bit.bit5 = 1;
+          SCount--;
+        }
+      }
+      break;
+    case 6:
+      if (!byte.bit.bit6) {
+        result = false;
+        if (FLAG == 1) {
+          byte.bit.bit6 = 1;
+          SCount--;
+        }
+      }
+      break;
+    case 7:
+      if (!byte.bit.bit7) {
+        result = false;
+        if (FLAG == 1) {
+          byte.bit.bit7 = 1;
+          SCount--;
+        }
+      }
+      break;
+    default:
+      cerr << "error at coveredBit()" << endl;
+      break;
+  }
+}
+
+/**
+ *
+ * @param _pos
+ * @param val
+ * @param sub
+ * @param FLAG
+ * @return
+ */
+bool SUT::coveredSub(const int* _pos, const int* val, const SubInfo sub, int FLAG) {
+  int t = sub.subWay;
+  int para = sub.subParameter;
+  int* position = sub.subPosition;
+
+  bool ret = true;
+
+  int row = sub.coverIndex + pos2num(_pos, para, t);
+
+  int column = 0;
+  int column_bit = 0;
+
+  int subIndex = 0;
+  int it = 0;
+  for (int i = 0; i < t; i++) {
+    it = val[i];
+    for (int j = i + 1; j < t; j++)
+      it = value[position[_pos[j]]] * it;
+    subIndex += it;
+  }
+
+  column = subIndex / 8;
+  column_bit = subIndex % 8;
+
+  coveredBit(AllS[row][column], column_bit, ret, FLAG);
+  return ret;
+}
+
+
+/**
+ * Set hard constraints based on clauses.
+ * Set at-least and at-most constraints based on SUT,
+ * @param clause
+ */
+void SUT::setConstraint(const vector<InputClause> &clauses) {
+  // hard constraint
+  for (unsigned i = 0; i < clauses.size(); i++) {
+    solver.addClause(const_cast<InputClause &>(clauses[i]));
+  }
+
+  for (unsigned i = 0; i < parameter; i++) {
+    // at-least constraint
+    InputClause atLeast;
+    for (unsigned j = 0; j < value[i]; j++)
+      atLeast.append(InputTerm(false, relations[i][j]));
+    solver.addClause(atLeast);
+
+    // at-most constraint
+    for (unsigned x = 0; x < value[i] - 1; x++) {
+      for (unsigned y = x + 1; y < value[i]; y++) {
+        InputClause atMost;
+        atMost.append(InputTerm(true, relations[i][x]));
+        atMost.append(InputTerm(true, relations[i][y]));
+        solver.addClause(atMost);
+      }
+    }
+  }
+}
+
+/**
+ * Determine whether a test case is valid.
+ * @param test
+ * @return
+ */
+bool SUT::isValid(const int *test) {
+  if (!solver.isEnabled())
+    return true ;
+
+  InputClause clause;
+  for (unsigned i = 0; i < parameter; i++)
+    clause.append(InputTerm(false, relations[i][test[i]]));
+
+  return solver(clause);
+}
+
+/**
+ * Determine whether a combination is valid.
+ * @param test
+ * @return
+ */
+bool SUT::isValid(const int *pos, const int *sch, int strength) {
+  if (!solver.isEnabled())
+    return true ;
+
+  InputClause clause;
+  for (unsigned i = 0; i < strength; i++)
+    clause.append(InputTerm(false, relations[pos[i]][sch[i]]));
+
+  return solver(clause);
+}
