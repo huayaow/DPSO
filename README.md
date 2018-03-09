@@ -49,14 +49,14 @@ Run `make` to build.
 `DPSO [OPTIONS] [MODEL_FILE]`
 
 For example, run `./DPSO example.model` to generate a covering array for the testing
-model described in **example.model**, which is **CA(N; 2, 3^5)**. More options can be
+model described in `example.model`, which is CA(N; 2, 3^5). More options can be
 found by `./DPSO --help`.
 
 DPSO provides both conventional and discrete versions of standard PSO and its four
 variants, including `CPSO`, `DPSO` (default), `CTVAC`, `DTVAC`, `CCLPSO`, `DCLPSO`,
 `CAPSO`, `DAPSO`, `CDMSPSO`, `DDMSPSO`.
 
-The model file **[NAME].model** gives parameters, values and covering strength.
+The model file `[NAME].model` gives parameters, values and covering strength.
 It has the following format:
 
 ```
@@ -65,7 +65,7 @@ It has the following format:
 [number of values for each parameter]
 ```
 
-The constraint file **[NAME].constraints** gives the dependence among parameter
+The constraint file `[NAME].constraints` gives the dependence among parameter
 values. It has the following format:
 
 ```
