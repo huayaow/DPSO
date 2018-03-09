@@ -29,7 +29,7 @@ ConstraintFile::ConstraintFile(const string& filename) {
         infile >> sign;
       } while (sign != '-' && sign != '+');
       infile >> symbol;
-      clause.append(InputTerm(sign == '-', symbol));
+      clause.append(InputTerm(sign == '-', symbol + 1));
     }
   }
 

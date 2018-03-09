@@ -3,14 +3,12 @@
 *.exe
 *.o
 *.ca
+
+# customized files
+*.data
+*.py
 test/
-
-# but not these
-!specification.txt
-!constraint.txt
-
-# executable file
-DPSO
+exp/
 
 # Visio Studio files
 *.sln

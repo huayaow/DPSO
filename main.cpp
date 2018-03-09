@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     outFile.update(generator->ARRAY, sut->parameter, generator->TIME);
   }
   outFile.write(sut, outputFile);
-  cout << "Best Size = " << outFile.size << ", Time = " << outFile.time << endl;
+  cout << "Best Size = " << outFile.size << " Time = " << outFile.time << endl;
 
 	return 0;
 }

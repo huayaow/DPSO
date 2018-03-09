@@ -23,8 +23,8 @@ static const string supported[] = {
 static const char *version = "1.0";
 static const char *program_name = "DPSO";
 static const char *program =
-  "Generate uniform and variable strength covering arrays by conventional and\n"
-  "discrete particle swarm optimization algorithms.\n\n";
+  "Generate (constrained) covering arrays by conventional and discrete "
+  "particle swarm optimization algorithms.\n\n";
 
 static const char *doc =
   "  -c, --constraint  [FILE]  the file to indicate constraints\n"

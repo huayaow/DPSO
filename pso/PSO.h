@@ -29,6 +29,8 @@ public:
     for (int i = 0; i < config.population; i++) {
       Particle *a = new Particle(sut->parameter, sut->value, sut->tway, checkValidity);
       a->randomInit();
+      while (!a->isPositionValid())
+        a->randomInit();
       swarm.push_back(a);
     }
 
@@ -46,38 +48,38 @@ public:
     while (true) {
       // evaluate each particle
       for ( auto i : swarm ) {
-        // only do updating according to valid particles
-        if (i->isPositionValid()) {
-          // compute fitness value
-          int fit = sut->fitnessValue(i->position, 0);
+        bool validity = i->isPositionValid();
 
-          // if fitness(t) = coverMax, then return
-          if (fit == sut->testcaseCoverMax) {
+        // compute fitness value
+        int penalty = validity ? 0 : int(sut->testcaseCoverMax * 0.5);
+        int fit = sut->fitnessValue(i->position, 0) - penalty;
+
+        // if fitness(t) = coverMax, then return
+        if (fit == sut->testcaseCoverMax) {
+          for (int c = 0; c < sut->parameter; c++)
+            best[c] = i->position[c];
+
+          for_each(swarm.begin(), swarm.end(), [](Particle* p){delete p;});
+          swarm.clear();
+          return best;
+        }
+
+        // update pBest
+        if (fit > i->fitness_pbest)
+          i->setPbest(fit);
+
+        // update gBest
+        if (validity && fit > fit_best) {
+          fit_best = fit;
+          for (int c = 0; c < sut->parameter; c++)
+            best[c] = i->position[c];
+        }
+
+        // additional distance evaluation for DPSO
+        if (validity && TypeName<Particle>::Get() == "D" && fit == fit_best) {
+          if (hammingDist(i->position) < hammingDist(best)) {
             for (int c = 0; c < sut->parameter; c++)
               best[c] = i->position[c];
-
-            for_each(swarm.begin(), swarm.end(), [](Particle* p){delete p;});
-            swarm.clear();
-            return best;
-          }
-
-          // update pBest
-          if (fit > i->fitness_pbest)
-            i->setPbest(fit);
-
-          // update gBest
-          if (fit > fit_best) {
-            fit_best = fit;
-            for (int c = 0; c < sut->parameter; c++)
-              best[c] = i->position[c];
-          }
-
-          // additional distance evaluation for DPSO
-          if( TypeName<Particle>::Get() == "D" && fit == fit_best) {
-            if (hammingDist(i->position) < hammingDist(best)) {
-              for (int c = 0; c < sut->parameter; c++)
-                best[c] = i->position[c];
-            }
           }
         }
       }  // end for
